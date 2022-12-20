@@ -21,41 +21,21 @@ struct Artwork {
     pub url: String,
 }
 
+macro_rules! selector {
+    ($document: expr, $selector: expr, $attr: expr) => {
+        { $document.select(&Selector::parse($selector).unwrap()).map(|e| e.value().attr($attr)) }
+    };
+}
+
 impl Artwork {
     pub fn parse(body: String) -> Option<Self> {
         let document = Html::parse_document(&body);
 
-        let image_selector = Selector::parse(r#"link[rel=preload][as=image]"#).unwrap();
-        let title_selector = Selector::parse(r#"meta[property="og:title"]"#).unwrap();
-        let description_selector =
-            Selector::parse(r#"meta[property="twitter:description"]"#).unwrap();
-        let url_selector = Selector::parse(r#"meta[property="twitter:url"]"#).unwrap();
-
         Some(Self {
-            image_url: document
-                .select(&image_selector)
-                .next()?
-                .value()
-                .attr("href")?
-                .to_string(),
-            title: document
-                .select(&title_selector)
-                .next()?
-                .value()
-                .attr("content")?
-                .to_string(),
-            description: document
-                .select(&description_selector)
-                .next()?
-                .value()
-                .attr("content")?
-                .to_string(),
-            url: document
-                .select(&url_selector)
-                .next()?
-                .value()
-                .attr("content")?
-                .to_string(),
+            image_url: selector!(document, r#"link[rel=preload][as=image]"#, "href").next()??.to_string(),
+            title: selector!(document, r#"meta[property="og:title"]"#, "content").next()??.to_string(),
+            description: selector!(document, r#"meta[property="twitter:description"]"#, "content").next()??.to_string(),
+            url: selector!(document, r#"meta[property="twitter:url"]"#, "content").next()??.to_string(),
         })
     }
 
