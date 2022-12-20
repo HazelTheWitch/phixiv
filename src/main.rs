@@ -74,7 +74,7 @@ async fn phixiv_handler(event: Request) -> Result<Response<Body>, Error> {
 
     let resp = Response::builder()
         .status(200)
-        .header("content-type", "text/html")
+        .header("Content-Type", "text/html")
         .header("Referer", "http://www.pixiv.net/")
         .body(html.into())
         .map_err(Box::new)?;
