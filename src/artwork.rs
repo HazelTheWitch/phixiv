@@ -22,7 +22,7 @@ impl Artwork {
 
         Some(Self {
             image_url: selector!(document, r#"link[rel=preload][as=image]"#, "href").next()??.to_string(),
-            title: selector!(document, r#"meta[property="og:title"]"#, "content").next()??.to_string(),
+            title: selector!(document, r#"meta[property="twitter:title"]"#, "content").next()??.to_string(),
             description: selector!(document, r#"meta[property="twitter:description"]"#, "content").next()??.to_string(),
             url: selector!(document, r#"meta[property="twitter:url"]"#, "content").next()??.to_string(),
         })
