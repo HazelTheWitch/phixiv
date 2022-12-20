@@ -1,6 +1,6 @@
 @echo off
 
-docker run --rm -v %cd%:/code -v %userprofile%/.cargo/registry:/root/.cargo/registry -v %userprofile%/.cargo/git:/root/.cargo/git rustserverless/lambda-rust
+cargo lambda build --release --arm64 --output-format zip
 
-aws lambda update-function-code --function-name phixiv --zip-file "fileb://./target/lambda/release/phixiv.zip"
-aws lambda update-function-code --function-name phixiv_proxy --zip-file "fileb://./target/lambda/release/phixiv_proxy.zip"
+aws lambda update-function-code --function-name phixiv --zip-file "fileb://./target/lambda/phixiv/bootstrap.zip"
+aws lambda update-function-code --function-name phixiv_proxy --zip-file "fileb://./target/lambda/phixiv_proxy/bootstrap.zip"
