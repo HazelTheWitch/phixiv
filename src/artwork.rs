@@ -37,7 +37,7 @@ impl Artwork {
         cfg.ensure_spec_compliant_unquoted_attribute_values = true;
         cfg.keep_spaces_between_attributes = true;
 
-        let minified = minify(&html.as_bytes(), &cfg);
+        let minified = minify(html.as_bytes(), &cfg);
 
         Ok(String::from_utf8(minified)?)
     }
@@ -47,7 +47,7 @@ impl From<PixivResponse> for Artwork {
     fn from(response: PixivResponse) -> Self {
         let body = response.body;
 
-        let description = if body.description.len() > 0 {
+        let description = if !body.description.is_empty() {
             body.description
         } else {
             body.alt.to_owned()
@@ -59,7 +59,7 @@ impl From<PixivResponse> for Artwork {
             #[cfg(not(feature = "small_images"))]
             image_url: body.urls.regular,
             title: body.title,
-            description: description,
+            description,
             url: body.extra_data.meta.canonical,
             alt_text: body.alt,
             author_name: body.author_name,

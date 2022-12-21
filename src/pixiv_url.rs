@@ -88,7 +88,7 @@ impl PixivPath {
         let url = format!(
             "https://www.pixiv.net/ajax/illust/{}?lang={}",
             self.artwork_id,
-            self.language.unwrap_or("jp".to_string())
+            self.language.unwrap_or_else(|| "jp".to_string())
         );
 
         let pixiv_response = reqwest::get(url)
