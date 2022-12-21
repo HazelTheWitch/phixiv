@@ -27,13 +27,11 @@ async fn generate_html(path: String) -> Result<Response<Body>, Error> {
 
     let html = artwork.to_html()?;
 
-    Ok(
-        Response::builder()
-            .status(200)
-            .header("Content-Type", "text/html")
-            .body(html.into())
-            .map_err(Box::new)?
-    )
+    Ok(Response::builder()
+        .status(200)
+        .header("Content-Type", "text/html")
+        .body(html.into())
+        .map_err(Box::new)?)
 }
 
 async fn phixiv_handler(event: Request) -> Result<Response<Body>, Error> {

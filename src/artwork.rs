@@ -33,7 +33,14 @@ impl From<PixivResponse> for Artwork {
             body.alt.to_owned()
         };
 
-        Self { image_url: body.urls.small, title: body.title, description: description, url: body.extra_data.meta.canonical, alt_text: body.alt, author_name: body.author_name }
+        Self {
+            image_url: body.urls.small,
+            title: body.title,
+            description: description,
+            url: body.extra_data.meta.canonical,
+            alt_text: body.alt,
+            author_name: body.author_name,
+        }
     }
 }
 

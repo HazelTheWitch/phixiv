@@ -15,11 +15,9 @@ async fn main() -> Result<(), Error> {
 async fn redirect_handler(request: Request) -> Result<Response<Body>, Error> {
     let redirect_url = format!("{}{}", REDIRECT_PATH, request.raw_http_path());
 
-    Ok(
-        Response::builder()
-            .status(302)
-            .header("Location", &redirect_url)
-            .body(Body::Empty)
-            .map_err(Box::new)?
-    )
+    Ok(Response::builder()
+        .status(302)
+        .header("Location", &redirect_url)
+        .body(Body::Empty)
+        .map_err(Box::new)?)
 }
