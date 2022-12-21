@@ -1,7 +1,7 @@
-use serde::Deserialize;
-use thiserror::Error;
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde::Deserialize;
+use thiserror::Error;
 
 use crate::artwork::Artwork;
 
@@ -12,7 +12,7 @@ pub enum PixivError {
     #[error("no artwork id, should never happen")]
     NoArtworkID,
     #[error("failed to resolve PixivPath")]
-    Resolution(#[from] ResolutionError)
+    Resolution(#[from] ResolutionError),
 }
 
 #[derive(Debug, Error)]
@@ -68,24 +68,35 @@ impl PixivPath {
             static ref ARTWORK_RE: Regex = Regex::new(r#"^(/.+)?/artworks/(\d+)/?$"#).unwrap();
         }
 
-        let capture = ARTWORK_RE.captures(path).ok_or(PixivError::NotArtworkPath)?;
+        let capture = ARTWORK_RE
+            .captures(path)
+            .ok_or(PixivError::NotArtworkPath)?;
 
         let language = capture.get(1).map(|m| m.as_str());
-        let artwork_id = capture.get(2).map(|m| m.as_str()).ok_or(PixivError::NoArtworkID)?;
+        let artwork_id = capture
+            .get(2)
+            .map(|m| m.as_str())
+            .ok_or(PixivError::NoArtworkID)?;
 
         Ok(Self {
             language: language.map(|s| s.to_string()),
-            artwork_id: artwork_id.to_string()
+            artwork_id: artwork_id.to_string(),
         })
     }
 
     pub async fn resolve(self) -> Result<Artwork, PixivError> {
-        let url = format!("https://www.pixiv.net/ajax/illust/{}?lang={}", self.artwork_id, self.language.unwrap_or("jp".to_string()));
+        let url = format!(
+            "https://www.pixiv.net/ajax/illust/{}?lang={}",
+            self.artwork_id,
+            self.language.unwrap_or("jp".to_string())
+        );
 
         let pixiv_response = reqwest::get(url)
-            .await.map_err(ResolutionError::Reqwest)?
+            .await
+            .map_err(ResolutionError::Reqwest)?
             .json::<PixivResponse>()
-            .await.map_err(ResolutionError::Reqwest)?;
+            .await
+            .map_err(ResolutionError::Reqwest)?;
 
         Ok(pixiv_response.into())
     }
