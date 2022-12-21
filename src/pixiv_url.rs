@@ -32,8 +32,17 @@ pub struct PixivBody {
     pub description: String,
     pub alt: String,
     pub urls: PixivUrls,
+    pub tags: PixivTags,
+    #[serde(rename = "fanboxPromotion")]
+    pub fanbox_promotion: PixivFanboxPromotion,
     #[serde(rename = "extraData")]
     pub extra_data: PixivExtraData,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PixivTags {
+    #[serde(rename = "authorId")]
+    pub author_id: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -49,6 +58,14 @@ pub struct PixivExtraData {
 #[derive(Debug, Deserialize)]
 pub struct PixivMeta {
     pub canonical: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PixivFanboxPromotion {
+    #[serde(rename = "userName")]
+    pub user_name: String,
+    #[serde(rename = "userImageUrl")]
+    pub author_url: String,
 }
 
 #[derive(Debug)]
