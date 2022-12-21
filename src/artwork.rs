@@ -1,4 +1,3 @@
-use scraper::{Html, Selector};
 use serde::Serialize;
 use tera::{Context, Tera};
 
