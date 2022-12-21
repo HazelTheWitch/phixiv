@@ -1,4 +1,13 @@
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+enum ProxyError {
+    #[error("invalid host provided")]
+    InvalidHost,
+    #[error("invalid query string parameters provided")]
+    InvalidParameters,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -29,44 +38,27 @@ async fn pass_response(response: reqwest::Response) -> Result<Response<Body>, Er
     })
 }
 
-fn error_response(error: &str) -> Result<Response<Body>, Error> {
-    Ok(Response::builder()
-        .status(200)
-        .header("Content-Type", "text/html")
-        .body(error.into())
-        .map_err(Box::new)?)
-}
-
 async fn proxy_handler(request: Request) -> Result<Response<Body>, Error> {
-    let Some(url) = request.query_string_parameters().iter().find_map(|(name, value)| {
+    let url = request.query_string_parameters().iter().find_map(|(name, value)| {
         if name == "url" {
             Some(value.to_owned())
         } else {
             None
         }
-    }) else {
-        return error_response("please provide a url");
-    };
+    }).ok_or(ProxyError::InvalidParameters)?;
 
-    let Ok(url_object) = url::Url::parse(&url) else {
-        return error_response(&format!("could not parse url: {}", url));
-    };
+    let url_object = url::Url::parse(&url)?;
 
     if url_object.host_str() != Some("i.pximg.net") {
-        return error_response(&format!(
-            "can not proxy to host: {:?}",
-            url_object.host_str()
-        ));
+        return Err(ProxyError::InvalidHost)?;
     }
 
     let client = reqwest::Client::new();
-    let Ok(image_response) = client
+    let image_response = client
         .get(&url)
         .header("Referer", "https://www.pixiv.net/")
         .send()
-        .await else {
-            return error_response("could not access url");
-    };
+        .await?;
 
     pass_response(image_response).await
 }

@@ -1,7 +1,15 @@
 use lambda_http::{run, service_fn, Error, Request, RequestExt};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+enum OembedError {
+    #[error("url was not provided")]
+    URLNotProvided,
+    #[error("host was not pixiv.net")]
+    InvalidHost(Option<String>),
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -44,16 +52,18 @@ struct PixivOembedResponse {
 }
 
 async fn oembed_handler(request: Request) -> Result<(StatusCode, serde_json::Value), Error> {
-    let Some(url) = request.query_string_parameters().iter().find_map(|(name, value)| if name == "url" { Some(value.to_string()) } else { None }) else {
-        return Ok((StatusCode::NOT_FOUND, json!({})));
-    };
+    let url = request
+        .query_string_parameters()
+        .iter()
+        .find_map(|(name, value)| if name == "url" { Some(value.to_string()) } else { None })
+        .ok_or(OembedError::URLNotProvided)?;
 
-    let Ok(url_object) = url::Url::parse(&url) else {
-        return Ok((StatusCode::NOT_FOUND, json!({})));
-    };
+    let url_object = url::Url::parse(&url)?;
 
-    if url_object.host_str() != Some("www.pixiv.net") {
-        return Ok((StatusCode::NOT_FOUND, json!({})));
+    let host = url_object.host_str();
+
+    if host != Some("www.pixiv.net") {
+        return Err(OembedError::InvalidHost(host.map(|s| s.to_string())))?;
     }
 
     let por = reqwest::get(format!("https://embed.pixiv.net/oembed.php?url={}", urlencoding::encode(&url))).await?.json::<PixivOembedResponse>().await?;
