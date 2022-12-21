@@ -34,7 +34,10 @@ impl From<PixivResponse> for Artwork {
         };
 
         Self {
+            #[cfg(feature = "small_images")]
             image_url: body.urls.small,
+            #[cfg(not(feature = "small_images"))]
+            image_url: body.urls.regular,
             title: body.title,
             description: description,
             url: body.extra_data.meta.canonical,

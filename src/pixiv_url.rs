@@ -43,6 +43,7 @@ pub struct PixivBody {
 #[derive(Debug, Deserialize)]
 pub struct PixivUrls {
     pub small: String,
+    pub regular: String,
 }
 
 #[derive(Debug, Deserialize)]
