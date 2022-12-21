@@ -63,7 +63,6 @@ pub struct PixivPath {
 }
 
 impl PixivPath {
-    /// Parses a `PixivUrl` from a URL path
     pub fn parse(path: &str) -> Result<Self, PixivError> {
         lazy_static! {
             static ref ARTWORK_RE: Regex = Regex::new(r#"^(/.+)?/artworks/(\d+)/?$"#).unwrap();

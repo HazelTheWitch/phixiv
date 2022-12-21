@@ -1,4 +1,4 @@
-use std::string::FromUtf8Error;
+use std::{string::FromUtf8Error, env};
 
 use minify_html::{minify, Cfg};
 use serde::Serialize;
@@ -36,7 +36,11 @@ impl Artwork {
         cfg.ensure_spec_compliant_unquoted_attribute_values = true;
         cfg.keep_spaces_between_attributes = true;
 
-        let html = &tera.render("artwork.html", &Context::from_serialize(self)?)?;
+        let mut context = Context::from_serialize(self)?;
+        context.insert("embed_url", &env::var("EMBED_URL").unwrap());
+        context.insert("proxy_url", &env::var("PROXY_URL").unwrap());
+
+        let html = &tera.render("artwork.html", &context)?;
 
         let minified = minify(html.as_bytes(), &cfg);
 
