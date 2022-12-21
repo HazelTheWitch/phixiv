@@ -25,7 +25,7 @@ async fn generate_html(path: String) -> Result<Response<Body>, Error> {
 
     let artwork = pixiv_path.resolve().await?;
 
-    let html = artwork.to_html()?;
+    let html = artwork.render_minified()?;
 
     Ok(Response::builder()
         .status(200)
