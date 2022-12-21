@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-enum OembedError {
+enum EmbedError {
     #[error("url was not provided")]
     URLNotProvided,
     #[error("host was not pixiv.net")]
@@ -62,14 +62,14 @@ async fn oembed_handler(request: Request) -> Result<(StatusCode, serde_json::Val
                 None
             }
         })
-        .ok_or(OembedError::URLNotProvided)?;
+        .ok_or(EmbedError::URLNotProvided)?;
 
     let url_object = url::Url::parse(&url)?;
 
     let host = url_object.host_str();
 
     if host != Some("www.pixiv.net") {
-        return Err(OembedError::InvalidHost(host.map(|s| s.to_string())))?;
+        return Err(EmbedError::InvalidHost(host.map(|s| s.to_string())))?;
     }
 
     let por = reqwest::get(format!(
