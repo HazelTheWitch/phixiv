@@ -1,3 +1,4 @@
+use isbot::Bots;
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
 use phixiv::pixiv_url::PixivPath;
 
@@ -12,7 +13,7 @@ async fn main() -> Result<(), Error> {
 }
 
 #[inline(always)]
-fn error_redirect(pixiv_url: &str) -> Result<Response<Body>, Error> {
+fn redirect(pixiv_url: &str) -> Result<Response<Body>, Error> {
     Ok(Response::builder()
         .status(302)
         .header("Location", pixiv_url)
@@ -38,8 +39,16 @@ async fn phixiv_handler(event: Request) -> Result<Response<Body>, Error> {
     let pixiv_path = event.raw_http_path();
     let pixiv_url = format!("https://pixiv.net{}", &pixiv_path);
 
+    let bots = Bots::default();
+
+    if let Some(Ok(user_agent)) = event.headers().get("User-Agent").map(|ua| ua.to_str()) {
+        if !bots.is_bot(user_agent) {
+            return redirect(&pixiv_url);
+        }
+    }
+
     match generate_html(pixiv_path).await {
         Ok(response) => Ok(response),
-        Err(_) => error_redirect(&pixiv_url),
+        Err(_) => redirect(&pixiv_url),
     }
 }
