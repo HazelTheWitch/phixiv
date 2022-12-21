@@ -18,25 +18,25 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    run(service_fn(oembed_handler)).await
+    run(service_fn(embed_handler)).await
 }
 
 #[derive(Debug, Serialize)]
-struct OembedResponse {
+struct EmbedResponse {
     version: String,
     #[serde(rename = "type")]
-    oembed_type: String,
+    embed_type: String,
     author_name: String,
     author_url: String,
     provider_name: String,
     provider_url: String,
 }
 
-impl From<PixivOembedResponse> for OembedResponse {
-    fn from(por: PixivOembedResponse) -> Self {
+impl From<PixivEmbedResponse> for EmbedResponse {
+    fn from(por: PixivEmbedResponse) -> Self {
         Self {
             version: "1.0".to_string(),
-            oembed_type: "rich".to_string(),
+            embed_type: "rich".to_string(),
             author_name: por.author_name,
             author_url: por.author_url,
             provider_name: "phixiv".into(),
@@ -46,12 +46,12 @@ impl From<PixivOembedResponse> for OembedResponse {
 }
 
 #[derive(Debug, Deserialize)]
-struct PixivOembedResponse {
+struct PixivEmbedResponse {
     author_name: String,
     author_url: String,
 }
 
-async fn oembed_handler(request: Request) -> Result<(StatusCode, serde_json::Value), Error> {
+async fn embed_handler(request: Request) -> Result<(StatusCode, serde_json::Value), Error> {
     let url = request
         .query_string_parameters()
         .iter()
@@ -77,11 +77,11 @@ async fn oembed_handler(request: Request) -> Result<(StatusCode, serde_json::Val
         urlencoding::encode(&url)
     ))
     .await?
-    .json::<PixivOembedResponse>()
+    .json::<PixivEmbedResponse>()
     .await?;
 
     Ok((
         StatusCode::OK,
-        serde_json::value::to_value::<OembedResponse>(por.into())?,
+        serde_json::value::to_value::<EmbedResponse>(por.into())?,
     ))
 }
