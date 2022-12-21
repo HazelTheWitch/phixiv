@@ -1,4 +1,6 @@
 use lambda_http::{run, service_fn, Body, Error, Request, Response};
+use reqwest::StatusCode;
+use serde::Serialize;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -7,14 +9,14 @@ async fn main() -> Result<(), Error> {
         .without_time()
         .init();
 
-    run(service_fn(redirect_handler)).await
+    run(service_fn(oembed_handler)).await
 }
 
-async fn redirect_handler(_request: Request) -> Result<Response<Body>, Error> {
-    Ok(
-        Response::builder()
-            .status(200)
-            .body("oembed up".into())
-            .map_err(Box::new)?
-    )
+#[derive(Debug, Serialize)]
+struct OembedResponse {
+    value: String,
+}
+
+async fn oembed_handler(request: Request) -> Result<(StatusCode, serde_json::Value), Error> {
+    Ok((StatusCode::OK, serde_json::value::to_value(OembedResponse {value: "good".into()})?))
 }
