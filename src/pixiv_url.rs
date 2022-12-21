@@ -79,9 +79,9 @@ impl PixivPath {
         let url = format!("https://www.pixiv.net/ajax/illust/{}?lang={}", self.artwork_id, self.language.unwrap_or("jp".to_string()));
 
         let pixiv_response = reqwest::get(url)
-            .await.map_err(|err| ResolutionError::Reqwest(err))?
+            .await.map_err(ResolutionError::Reqwest)?
             .json::<PixivResponse>()
-            .await.map_err(|err| ResolutionError::Reqwest(err))?;
+            .await.map_err(ResolutionError::Reqwest)?;
 
         Ok(pixiv_response.into())
     }
