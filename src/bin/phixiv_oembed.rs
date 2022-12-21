@@ -1,4 +1,4 @@
-use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
+use lambda_http::{run, service_fn, Body, Error, Request, Response};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -10,7 +10,7 @@ async fn main() -> Result<(), Error> {
     run(service_fn(redirect_handler)).await
 }
 
-async fn redirect_handler(request: Request) -> Result<Response<Body>, Error> {
+async fn redirect_handler(_request: Request) -> Result<Response<Body>, Error> {
     Ok(
         Response::builder()
             .status(200)
