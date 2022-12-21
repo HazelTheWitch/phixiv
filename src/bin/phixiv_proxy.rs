@@ -39,13 +39,17 @@ async fn pass_response(response: reqwest::Response) -> Result<Response<Body>, Er
 }
 
 async fn proxy_handler(request: Request) -> Result<Response<Body>, Error> {
-    let url = request.query_string_parameters().iter().find_map(|(name, value)| {
-        if name == "url" {
-            Some(value.to_owned())
-        } else {
-            None
-        }
-    }).ok_or(ProxyError::InvalidParameters)?;
+    let url = request
+        .query_string_parameters()
+        .iter()
+        .find_map(|(name, value)| {
+            if name == "url" {
+                Some(value.to_owned())
+            } else {
+                None
+            }
+        })
+        .ok_or(ProxyError::InvalidParameters)?;
 
     let url_object = url::Url::parse(&url)?;
 

@@ -55,7 +55,13 @@ async fn oembed_handler(request: Request) -> Result<(StatusCode, serde_json::Val
     let url = request
         .query_string_parameters()
         .iter()
-        .find_map(|(name, value)| if name == "url" { Some(value.to_string()) } else { None })
+        .find_map(|(name, value)| {
+            if name == "url" {
+                Some(value.to_string())
+            } else {
+                None
+            }
+        })
         .ok_or(OembedError::URLNotProvided)?;
 
     let url_object = url::Url::parse(&url)?;
@@ -66,7 +72,16 @@ async fn oembed_handler(request: Request) -> Result<(StatusCode, serde_json::Val
         return Err(OembedError::InvalidHost(host.map(|s| s.to_string())))?;
     }
 
-    let por = reqwest::get(format!("https://embed.pixiv.net/oembed.php?url={}", urlencoding::encode(&url))).await?.json::<PixivOembedResponse>().await?;
+    let por = reqwest::get(format!(
+        "https://embed.pixiv.net/oembed.php?url={}",
+        urlencoding::encode(&url)
+    ))
+    .await?
+    .json::<PixivOembedResponse>()
+    .await?;
 
-    Ok((StatusCode::OK, serde_json::value::to_value::<OembedResponse>(por.into())?))
+    Ok((
+        StatusCode::OK,
+        serde_json::value::to_value::<OembedResponse>(por.into())?,
+    ))
 }

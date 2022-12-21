@@ -1,8 +1,8 @@
 use std::string::FromUtf8Error;
 
+use minify_html::{minify, Cfg};
 use serde::Serialize;
 use tera::{Context, Tera};
-use minify_html::{Cfg, minify};
 use thiserror::Error;
 
 use crate::pixiv_url::PixivResponse;
