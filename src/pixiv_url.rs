@@ -3,7 +3,7 @@ use regex::Regex;
 use serde::Deserialize;
 use thiserror::Error;
 
-use crate::artwork::Artwork;
+use crate::artwork::{Artwork, ArtworkError};
 
 #[derive(Debug, Error)]
 pub enum PixivError {
@@ -13,6 +13,8 @@ pub enum PixivError {
     NoArtworkID,
     #[error("failed to resolve PixivPath")]
     Resolution(#[from] ResolutionError),
+    #[error("failed to parse the pixiv data to an artwork")]
+    Artwork(#[from] ArtworkError),
 }
 
 #[derive(Debug, Error)]
@@ -98,6 +100,6 @@ impl PixivPath {
             .await
             .map_err(ResolutionError::Reqwest)?;
 
-        Ok(pixiv_response.into())
+        Ok(pixiv_response.try_into()?)
     }
 }

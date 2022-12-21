@@ -1,13 +1,4 @@
-use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-enum ProxyError {
-    #[error("invalid host provided")]
-    InvalidHost,
-    #[error("invalid query string parameters provided")]
-    InvalidParameters,
-}
+use lambda_http::{run, service_fn, Body, Error, Request, Response, RequestExt};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -39,27 +30,12 @@ async fn pass_response(response: reqwest::Response) -> Result<Response<Body>, Er
 }
 
 async fn proxy_handler(request: Request) -> Result<Response<Body>, Error> {
-    let url = request
-        .query_string_parameters()
-        .iter()
-        .find_map(|(name, value)| {
-            if name == "url" {
-                Some(value.to_string())
-            } else {
-                None
-            }
-        })
-        .ok_or(ProxyError::InvalidParameters)?;
-
-    let url_object = url::Url::parse(&url)?;
-
-    if url_object.host_str() != Some("i.pximg.net") {
-        return Err(ProxyError::InvalidHost)?;
-    }
+    let pixiv_path = request.raw_http_path();
+    let pximg_url = format!("https://i.pximg.net{}", &pixiv_path);
 
     let client = reqwest::Client::new();
     let image_response = client
-        .get(&url)
+        .get(&pximg_url)
         .header("Referer", "https://www.pixiv.net/")
         .send()
         .await?;
