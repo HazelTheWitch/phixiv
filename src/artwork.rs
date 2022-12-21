@@ -18,7 +18,6 @@ impl Artwork {
         let mut tera = Tera::default();
         tera.add_raw_template("artwork.html", include_str!("../templates/artwork.html"))
             .unwrap();
-        tera.autoescape_on(vec![]);
 
         tera.render("artwork.html", &Context::from_serialize(self)?)
     }
