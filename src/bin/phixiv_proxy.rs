@@ -44,7 +44,7 @@ async fn proxy_handler(request: Request) -> Result<Response<Body>, Error> {
         .iter()
         .find_map(|(name, value)| {
             if name == "url" {
-                Some(value.to_owned())
+                Some(value.to_string())
             } else {
                 None
             }

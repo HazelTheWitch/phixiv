@@ -50,7 +50,7 @@ impl From<PixivResponse> for Artwork {
         let description = if !body.description.is_empty() {
             body.description
         } else {
-            body.alt.to_owned()
+            body.alt.to_string()
         };
 
         Self {
