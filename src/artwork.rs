@@ -2,6 +2,8 @@ use scraper::{Html, Selector};
 use serde::Serialize;
 use tera::{Context, Tera};
 
+use crate::pixiv_url::PixivResponse;
+
 #[derive(Debug, Serialize)]
 pub struct Artwork {
     pub image_url: String,
@@ -17,6 +19,7 @@ macro_rules! selector {
 }
 
 impl Artwork {
+    /// Parses an artwork from its HTML
     pub fn parse(body: String) -> Option<Self> {
         let document = Html::parse_document(&body);
 
@@ -28,13 +31,26 @@ impl Artwork {
         })
     }
 
-    pub fn to_html(&self) -> Option<String> {
+    pub fn to_html(&self) -> Result<String, tera::Error> {
         let mut tera = Tera::default();
         tera.add_raw_template("artwork.html", include_str!("../templates/artwork.html"))
             .unwrap();
         tera.autoescape_on(vec![]);
 
-        tera.render("artwork.html", &Context::from_serialize(self).ok()?)
-            .ok()
+        tera.render("artwork.html", &Context::from_serialize(self)?)
+    }
+}
+
+impl From<PixivResponse> for Artwork {
+    fn from(response: PixivResponse) -> Self {
+        let body = response.body;
+
+        let description = if body.description.len() > 0 {
+            body.description
+        } else {
+            body.alt
+        };
+
+        Self { image_url: body.urls.small, title: body.title, description: description, url: body.extra_data.meta.canonical }
     }
 }
