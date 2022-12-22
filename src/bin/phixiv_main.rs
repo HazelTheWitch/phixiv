@@ -1,6 +1,6 @@
 use isbot::Bots;
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
-use phixiv::artwork::Artwork;
+use phixiv::pixiv::artwork::Artwork;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -47,6 +47,9 @@ async fn phixiv_handler(request: Request) -> Result<Response<Body>, Error> {
 
     match generate_html(pixiv_path).await {
         Ok(response) => Ok(response),
-        Err(_) => redirect(&pixiv_url),
+        Err(err) => {
+            tracing::error!("{}", err);
+            redirect(&pixiv_url)
+        },
     }
 }

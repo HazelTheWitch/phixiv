@@ -1,14 +1,16 @@
+pub mod artwork;
 mod types;
 
 use std::env;
 
 use crate::{
-    artwork::{Artwork, ArtworkError},
     pixiv::types::PixivResponse,
 };
 use lazy_static::lazy_static;
 use regex::Regex;
 use thiserror::Error;
+
+use self::artwork::{ArtworkError, Artwork};
 
 #[derive(Debug, Error)]
 pub enum PixivError {

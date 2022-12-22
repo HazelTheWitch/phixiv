@@ -61,7 +61,7 @@ mod tests {
 
     use askama::Template;
 
-    use crate::artwork::Artwork;
+    use crate::pixiv::artwork::Artwork;
 
     #[tokio::test]
     async fn test_formatting() {
