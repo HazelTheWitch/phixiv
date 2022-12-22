@@ -72,7 +72,7 @@ async fn embed_handler(request: Request) -> Result<(StatusCode, serde_json::Valu
         return Err(EmbedError::InvalidHost(host.map(|s| s.to_string())))?;
     }
 
-    let por = reqwest::get(format!(
+    let pixiv_embed_response = reqwest::get(format!(
         "https://embed.pixiv.net/oembed.php?url={}",
         urlencoding::encode(&url)
     ))
@@ -82,6 +82,6 @@ async fn embed_handler(request: Request) -> Result<(StatusCode, serde_json::Valu
 
     Ok((
         StatusCode::OK,
-        serde_json::value::to_value::<EmbedResponse>(por.into())?,
+        serde_json::value::to_value::<EmbedResponse>(pixiv_embed_response.into())?,
     ))
 }
