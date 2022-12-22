@@ -12,7 +12,7 @@
     <meta content="{{ alt_text }}" property="image:alt" />
     <meta content="summary_large_image" name="twitter:card" />
     <meta http-equiv="Refresh" content="0; url='{{ url }}'" />
-    <link rel="alternate" type="application/json+oembed" href="{{ embed_url }}?url={{ url|escape }}">
+    <link rel="alternate" type="application/json+oembed" href="{{ embed_url }}?i={{ author_id|escape }}&n={{ author_name|escape }}">
 </head>
 <body>
     <a href="{{ url }}">You should have been redirected, here is a link to the original post.</a>

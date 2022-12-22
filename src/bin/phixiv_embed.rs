@@ -1,15 +1,16 @@
+use std::collections::HashMap;
+
 use lambda_http::{run, service_fn, Error, Request, RequestExt};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::to_value;
 use thiserror::Error;
+use urlencoding::encode;
 
 #[derive(Debug, Error)]
 enum EmbedError {
     #[error("url was not provided")]
-    URLNotProvided,
-    #[error("host was not pixiv.net")]
-    InvalidHost(Option<String>),
+    InvalidAuthorParameters,
 }
 
 #[tokio::main]
@@ -53,33 +54,21 @@ struct PixivEmbedResponse {
 }
 
 async fn embed_handler(request: Request) -> Result<(StatusCode, serde_json::Value), Error> {
-    let url = request
+    // TODO: This could be optimized to not require so many allocations but I don't care right now.
+    let query_string: HashMap<String, String> = request
         .query_string_parameters()
         .iter()
-        .find_map(|(name, value)| {
-            if name == "url" {
-                Some(value.to_string())
-            } else {
-                None
-            }
-        })
-        .ok_or(EmbedError::URLNotProvided)?;
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect();
 
-    let url_object = url::Url::parse(&url)?;
+    let (Some(author_name), Some(author_id)) = (query_string.get("n"), query_string.get("i")) else {
+        return Err(EmbedError::InvalidAuthorParameters)?;
+    };
 
-    let host = url_object.host_str();
-
-    if host != Some("www.pixiv.net") {
-        return Err(EmbedError::InvalidHost(host.map(|s| s.to_string())))?;
-    }
-
-    let pixiv_embed_response = reqwest::get(format!(
-        "https://embed.pixiv.net/oembed.php?url={}",
-        urlencoding::encode(&url)
-    ))
-    .await?
-    .json::<PixivEmbedResponse>()
-    .await?;
+    let pixiv_embed_response = PixivEmbedResponse {
+        author_name: author_name.to_string(),
+        author_url: format!("https://www.pixiv.net/users/{}", encode(&author_id)),
+    };
 
     Ok((
         StatusCode::OK,

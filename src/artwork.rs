@@ -20,12 +20,13 @@ pub enum ArtworkError {
 #[derive(Debug, Serialize, Template)]
 #[template(path = "artwork.html")]
 pub struct Artwork {
-    pub image_proxy_url: String,
-    pub title: String,
-    pub description: String,
-    pub author_name: String,
-    pub url: String,
-    pub alt_text: String,
+    image_proxy_url: String,
+    title: String,
+    description: String,
+    author_name: String,
+    author_id: String,
+    url: String,
+    alt_text: String,
     embed_url: String,
 }
 
@@ -74,6 +75,7 @@ impl TryFrom<PixivResponse> for Artwork {
             url: body.extra_data.meta.canonical,
             alt_text: body.alt,
             author_name: body.author_name,
+            author_id: body.author_id,
             embed_url: env::var("EMBED_URL").unwrap(),
         })
     }
