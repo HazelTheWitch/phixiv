@@ -12,15 +12,9 @@ pub enum PixivError {
     #[error("no artwork id, should never happen")]
     NoArtworkID,
     #[error("failed to resolve PixivPath")]
-    Resolution(#[from] ResolutionError),
+    Resolution(#[from] reqwest::Error),
     #[error("failed to parse the pixiv data to an artwork")]
     Artwork(#[from] ArtworkError),
-}
-
-#[derive(Debug, Error)]
-pub enum ResolutionError {
-    #[error("failed to retrieve url")]
-    Reqwest(#[from] reqwest::Error),
 }
 
 #[derive(Debug, Deserialize)]
@@ -94,11 +88,9 @@ impl PixivPath {
         );
 
         let pixiv_response = reqwest::get(url)
-            .await
-            .map_err(ResolutionError::Reqwest)?
+            .await?
             .json::<PixivResponse>()
-            .await
-            .map_err(ResolutionError::Reqwest)?;
+            .await?;
 
         Ok(pixiv_response.try_into()?)
     }
