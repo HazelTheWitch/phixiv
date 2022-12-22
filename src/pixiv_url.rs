@@ -75,7 +75,7 @@ impl PixivPath {
             .ok_or(PixivError::NoArtworkID)?;
 
         Ok(Self {
-            language: language.map(|s| s.to_string()),
+            language: language.map(ToString::to_string),
             artwork_id: artwork_id.to_string(),
         })
     }
@@ -84,7 +84,7 @@ impl PixivPath {
         let url = format!(
             "https://www.pixiv.net/ajax/illust/{}?lang={}",
             self.artwork_id,
-            self.language.unwrap_or_else(|| "jp".to_string())
+            self.language.unwrap_or_else(|| "jp".to_owned())
         );
 
         let pixiv_response = reqwest::get(url).await?.json::<PixivResponse>().await?;

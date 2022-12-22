@@ -15,6 +15,8 @@ pub enum ArtworkError {
     Templating(#[from] askama::Error),
     #[error("image url parsing error")]
     Parsing(#[from] url::ParseError),
+    #[error("missing environment variable in lambda")]
+    EnvironmentVariable(&'static str)
 }
 
 #[derive(Debug, Serialize, Template)]
@@ -44,10 +46,10 @@ impl Artwork {
         Ok(String::from_utf8(minified)?)
     }
 
-    pub fn format_image_proxy_url(url: String) -> Result<String, ArtworkError> {
-        let url = url::Url::parse(&url)?;
+    pub fn format_image_proxy_url(url: &str) -> Result<String, ArtworkError> {
+        let url = url::Url::parse(url)?;
 
-        let proxy_url = url::Url::parse(&env::var("PROXY_URL").unwrap())?;
+        let proxy_url = url::Url::parse(&env::var("PROXY_URL").or(Err(ArtworkError::EnvironmentVariable("PROXY_URL")))?)?;
 
         Ok(proxy_url.join(url.path())?.to_string())
     }
@@ -59,17 +61,17 @@ impl TryFrom<PixivResponse> for Artwork {
     fn try_from(response: PixivResponse) -> Result<Self, Self::Error> {
         let body = response.body;
 
-        let description = if !body.description.is_empty() {
-            body.description
+        let description = if body.description.is_empty() {
+            body.alt.clone()
         } else {
-            body.alt.to_string()
+            body.description
         };
 
         Ok(Self {
             #[cfg(feature = "small_images")]
-            image_proxy_url: Artwork::format_image_proxy_url(body.urls.small)?,
+            image_proxy_url: Artwork::format_image_proxy_url(&body.urls.small)?,
             #[cfg(not(feature = "small_images"))]
-            image_proxy_url: Artwork::format_image_proxy_url(body.urls.regular)?,
+            image_proxy_url: Artwork::format_image_proxy_url(&body.urls.regular)?,
             title: body.title,
             description,
             url: body.extra_data.meta.canonical,

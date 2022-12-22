@@ -37,8 +37,8 @@ impl<'s> EmbedResponse<'s> {
         Self {
             version: "1.0",
             embed_type: "rich",
-            author_name: author_name,
-            author_url: author_url,
+            author_name,
+            author_url,
             provider_name: "phixiv",
             provider_url: "https://github.com/HazelTheWitch/phixiv",
         }
