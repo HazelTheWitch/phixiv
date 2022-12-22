@@ -1,6 +1,7 @@
 use lambda_http::{run, service_fn, Error, Request, RequestExt};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use serde_json::to_value;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -82,6 +83,6 @@ async fn embed_handler(request: Request) -> Result<(StatusCode, serde_json::Valu
 
     Ok((
         StatusCode::OK,
-        serde_json::value::to_value::<EmbedResponse>(pixiv_embed_response.into())?,
+        to_value::<EmbedResponse>(pixiv_embed_response.into())?,
     ))
 }
