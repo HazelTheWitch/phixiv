@@ -5,8 +5,6 @@ use minify_html::{minify, Cfg};
 use serde::Serialize;
 use thiserror::Error;
 
-use crate::pixiv_url::PixivResponse;
-
 #[derive(Debug, Error)]
 pub enum ArtworkError {
     #[error("minifying error")]
@@ -16,20 +14,20 @@ pub enum ArtworkError {
     #[error("image url parsing error")]
     Parsing(#[from] url::ParseError),
     #[error("missing environment variable in lambda")]
-    EnvironmentVariable(&'static str)
+    EnvironmentVariable(&'static str),
 }
 
 #[derive(Debug, Serialize, Template)]
 #[template(path = "artwork.html")]
 pub struct Artwork {
-    image_proxy_url: String,
-    title: String,
-    description: String,
-    author_name: String,
-    author_id: String,
-    url: String,
-    alt_text: String,
-    embed_url: String,
+    pub image_proxy_url: String,
+    pub title: String,
+    pub description: String,
+    pub author_name: String,
+    pub author_id: String,
+    pub url: String,
+    pub alt_text: String,
+    pub embed_url: String,
 }
 
 impl Artwork {
@@ -49,37 +47,11 @@ impl Artwork {
     pub fn format_image_proxy_url(url: &str) -> Result<String, ArtworkError> {
         let url = url::Url::parse(url)?;
 
-        let proxy_url = url::Url::parse(&env::var("PROXY_URL").or(Err(ArtworkError::EnvironmentVariable("PROXY_URL")))?)?;
+        let proxy_url = url::Url::parse(
+            &env::var("PROXY_URL").or(Err(ArtworkError::EnvironmentVariable("PROXY_URL")))?,
+        )?;
 
         Ok(proxy_url.join(url.path())?.to_string())
-    }
-}
-
-impl TryFrom<PixivResponse> for Artwork {
-    type Error = ArtworkError;
-
-    fn try_from(response: PixivResponse) -> Result<Self, Self::Error> {
-        let body = response.body;
-
-        let description = if body.description.is_empty() {
-            body.alt.clone()
-        } else {
-            body.description
-        };
-
-        Ok(Self {
-            #[cfg(feature = "small_images")]
-            image_proxy_url: Artwork::format_image_proxy_url(&body.urls.small)?,
-            #[cfg(not(feature = "small_images"))]
-            image_proxy_url: Artwork::format_image_proxy_url(&body.urls.regular)?,
-            title: body.title,
-            description,
-            url: body.extra_data.meta.canonical,
-            alt_text: body.alt,
-            author_name: body.author_name,
-            author_id: body.author_id,
-            embed_url: env::var("EMBED_URL").unwrap(),
-        })
     }
 }
 
@@ -89,7 +61,7 @@ mod tests {
 
     use askama::Template;
 
-    use crate::pixiv_url::PixivPath;
+    use crate::artwork::Artwork;
 
     #[tokio::test]
     async fn test_formatting() {
@@ -98,9 +70,7 @@ mod tests {
 
         let path = "/en/artworks/101595682";
 
-        let pixiv_path = PixivPath::parse(&path).unwrap();
-
-        let artwork = pixiv_path.resolve().await.unwrap();
+        let artwork = Artwork::from_path(path).await.unwrap();
 
         let html = artwork.render().unwrap();
 

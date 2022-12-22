@@ -1,6 +1,6 @@
 use isbot::Bots;
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
-use phixiv::pixiv_url::PixivPath;
+use phixiv::artwork::Artwork;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -22,9 +22,7 @@ fn redirect(pixiv_url: &str) -> Result<Response<Body>, Error> {
 }
 
 async fn generate_html(path: String) -> Result<Response<Body>, Error> {
-    let pixiv_path = PixivPath::parse(&path)?;
-
-    let artwork = pixiv_path.resolve().await?;
+    let artwork = Artwork::from_path(&path).await?;
 
     let html = artwork.render_minified()?;
 
