@@ -87,10 +87,7 @@ impl PixivPath {
             self.language.unwrap_or_else(|| "jp".to_string())
         );
 
-        let pixiv_response = reqwest::get(url)
-            .await?
-            .json::<PixivResponse>()
-            .await?;
+        let pixiv_response = reqwest::get(url).await?.json::<PixivResponse>().await?;
 
         Ok(pixiv_response.try_into()?)
     }

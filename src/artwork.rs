@@ -1,7 +1,7 @@
-use std::{string::FromUtf8Error, env};
+use std::{env, string::FromUtf8Error};
 
 use askama::Template;
-use minify_html::{Cfg, minify};
+use minify_html::{minify, Cfg};
 use serde::Serialize;
 use thiserror::Error;
 
