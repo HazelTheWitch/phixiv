@@ -61,7 +61,7 @@ mod tests {
 
     use askama::Template;
 
-    use crate::pixiv::artwork::Artwork;
+    use crate::pixiv::{artwork::Artwork, PixivPath};
 
     #[tokio::test]
     async fn test_formatting() {
@@ -70,7 +70,7 @@ mod tests {
 
         let path = "/en/artworks/101595682";
 
-        let artwork = Artwork::from_path(path).await.unwrap();
+        let artwork = Artwork::from_path(PixivPath::parse(path).unwrap()).await.unwrap();
 
         let html = artwork.render().unwrap();
 

@@ -24,6 +24,34 @@ pub enum PixivError {
     Artwork(#[from] ArtworkError),
 }
 
+pub struct PixivPath {
+    language: Option<String>,
+    artwork_id: String,
+}
+
+impl PixivPath {
+    pub fn parse(path: &str) -> Result<Self, PixivError> {
+        lazy_static! {
+            static ref ARTWORK_RE: Regex = Regex::new(r#"^(/.+)?/artworks/(\d+)/?$"#).unwrap();
+        }
+
+        let capture = ARTWORK_RE
+            .captures(path)
+            .ok_or(PixivError::NotArtworkPath)?;
+
+        let language = capture.get(1).map(|m| m.as_str());
+        let artwork_id = capture
+            .get(2)
+            .map(|m| m.as_str())
+            .ok_or(PixivError::NoArtworkID)?;
+
+        Ok(Self {
+            language: language.map(ToString::to_string),
+            artwork_id: artwork_id.to_string(),
+        })
+    }
+}
+
 impl TryFrom<PixivResponse> for Artwork {
     type Error = ArtworkError;
 
@@ -53,28 +81,11 @@ impl TryFrom<PixivResponse> for Artwork {
 }
 
 impl Artwork {
-    pub async fn from_path(path: &str) -> Result<Self, PixivError> {
-        lazy_static! {
-            static ref ARTWORK_RE: Regex = Regex::new(r#"^(/.+)?/artworks/(\d+)/?$"#).unwrap();
-        }
-
-        let capture = ARTWORK_RE
-            .captures(path)
-            .ok_or(PixivError::NotArtworkPath)?;
-
-        let language = capture.get(1).map(|m| m.as_str());
-        let artwork_id = capture
-            .get(2)
-            .map(|m| m.as_str())
-            .ok_or(PixivError::NoArtworkID)?;
-
-        let language = language.map(ToString::to_string);
-        let artwork_id = artwork_id.to_string();
-
+    pub async fn from_path(path: PixivPath) -> Result<Self, PixivError> {
         let url = format!(
             "https://www.pixiv.net/ajax/illust/{}?lang={}",
-            artwork_id,
-            language.unwrap_or_else(|| "jp".to_owned())
+            &path.artwork_id,
+            &path.language.unwrap_or_else(|| "jp".to_owned())
         );
 
         let pixiv_response = reqwest::get(url).await?.json::<PixivResponse>().await?;
