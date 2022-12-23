@@ -11,12 +11,10 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn pass_response(response: reqwest::Response) -> Result<Response<Body>, Error> {
-    let content_type = response.headers().get("Content-Type");
-
     Ok({
         let mut builder = Response::builder().status(response.status());
 
-        if let Some(content_type) = content_type {
+        if let Some(content_type) = response.headers().get("Content-Type") {
             builder = builder.header("Content-Type", content_type);
         }
 
