@@ -12,6 +12,10 @@ use thiserror::Error;
 
 use self::artwork::{ArtworkError, Artwork};
 
+lazy_static! {
+    static ref ARTWORK_RE: Regex = Regex::new(r#"^(/.+)?/artworks/(\d+)/?$"#).unwrap();
+}
+
 #[derive(Debug, Error)]
 pub enum PixivError {
     #[error("not an artwork path")]
@@ -31,10 +35,6 @@ pub struct PixivPath {
 
 impl PixivPath {
     pub fn parse(path: &str) -> Result<Self, PixivError> {
-        lazy_static! {
-            static ref ARTWORK_RE: Regex = Regex::new(r#"^(/.+)?/artworks/(\d+)/?$"#).unwrap();
-        }
-
         let capture = ARTWORK_RE
             .captures(path)
             .ok_or(PixivError::NotArtworkPath)?;
