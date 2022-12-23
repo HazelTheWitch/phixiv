@@ -1,10 +1,10 @@
 pub mod artwork;
-mod types;
+mod response_payload;
 
 use std::env;
 
 use crate::{
-    pixiv::types::PixivResponse,
+    pixiv::response_payload::PixivResponse,
 };
 use lazy_static::lazy_static;
 use regex::Regex;
