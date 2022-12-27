@@ -70,7 +70,9 @@ mod tests {
 
         let path = "/en/artworks/101595682";
 
-        let artwork = Artwork::from_path(PixivPath::parse(path).unwrap()).await.unwrap();
+        let artwork = Artwork::from_path(PixivPath::parse(path).unwrap())
+            .await
+            .unwrap();
 
         let html = artwork.render().unwrap();
 

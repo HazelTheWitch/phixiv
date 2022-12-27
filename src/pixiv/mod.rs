@@ -3,14 +3,12 @@ mod response_payload;
 
 use std::env;
 
-use crate::{
-    pixiv::response_payload::PixivResponse,
-};
+use crate::pixiv::response_payload::PixivResponse;
 use lazy_static::lazy_static;
 use regex::Regex;
 use thiserror::Error;
 
-use self::artwork::{ArtworkError, Artwork};
+use self::artwork::{Artwork, ArtworkError};
 
 lazy_static! {
     static ref ARTWORK_RE: Regex = Regex::new(r#"^(/.+)?/artworks/(\d+)/?$"#).unwrap();

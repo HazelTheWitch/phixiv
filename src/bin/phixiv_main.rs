@@ -40,16 +40,14 @@ fn get_path(request: &Request) -> String {
     let mut query_string: String = request
         .query_string_parameters()
         .iter()
-        .map(|(k, v)| {
-            format!("{}={}", urlencoding::encode(k), urlencoding::encode(v))
-        })
+        .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
         .intersperse(String::from("&"))
         .collect();
-    
+
     if !query_string.is_empty() {
         query_string = ["?", &query_string].concat();
     }
-    
+
     [base_path, query_string].concat()
 }
 
@@ -75,6 +73,6 @@ async fn phixiv_handler(request: Request) -> Result<Response<Body>, Error> {
         Err(err) => {
             tracing::error!("{}", err);
             redirect(&pixiv_url)
-        },
+        }
     }
 }
