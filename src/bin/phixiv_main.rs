@@ -1,5 +1,7 @@
 #![feature(iter_intersperse)]
 
+use std::env;
+
 use isbot::Bots;
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
 use phixiv::pixiv::{artwork::Artwork, PixivPath};
@@ -24,7 +26,7 @@ fn redirect(pixiv_url: &str) -> Result<Response<Body>, Error> {
 }
 
 async fn generate_html(path: PixivPath) -> Result<Response<Body>, Error> {
-    let artwork = Artwork::from_path(path).await?;
+    let artwork = Artwork::from_path(path, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?;
 
     let html = artwork.render_minified()?;
 

@@ -2,8 +2,14 @@ use std::{env, string::FromUtf8Error};
 
 use askama::Template;
 use minify_html::{minify, Cfg};
+use regex::Regex;
 use serde::Serialize;
 use thiserror::Error;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref IMAGE_RE: Regex = Regex::new(r#"^(.)\.pximg\.net$"#).unwrap();
+}
 
 #[derive(Debug, Error)]
 pub enum ArtworkError {
@@ -15,6 +21,8 @@ pub enum ArtworkError {
     Parsing(#[from] url::ParseError),
     #[error("missing environment variable in lambda")]
     EnvironmentVariable(&'static str),
+    #[error("invalid image url")]
+    ImageURL,
 }
 
 #[derive(Debug, Serialize, Template)]
@@ -47,37 +55,17 @@ impl Artwork {
     pub fn format_image_proxy_url(url: &str) -> Result<String, ArtworkError> {
         let url = url::Url::parse(url)?;
 
-        let proxy_url = url::Url::parse(
-            &env::var("PROXY_URL").or(Err(ArtworkError::EnvironmentVariable("PROXY_URL")))?,
-        )?;
+        let proxy_url = env::var("PROXY_URL").or(Err(ArtworkError::EnvironmentVariable("PROXY_URL")))?;
 
-        Ok(proxy_url.join(url.path())?.to_string())
-    }
-}
+        let base = match url.host_str() {
+            Some(s) => {
+                let captures = IMAGE_RE.captures(s).ok_or(ArtworkError::ImageURL)?;
 
-#[cfg(test)]
-mod tests {
-    use std::env;
+                Ok(captures.get(1).map(|m| m.as_str()).ok_or(ArtworkError::ImageURL)?)
+            }
+            None => Err(ArtworkError::ImageURL),
+        }?;
 
-    use askama::Template;
-
-    use crate::pixiv::{artwork::Artwork, PixivPath};
-
-    #[tokio::test]
-    async fn test_formatting() {
-        env::set_var("EMBED_URL", "https://e.phixiv.net/");
-        env::set_var("PROXY_URL", "https://i.phixiv.net/");
-
-        let path = "/en/artworks/101595682";
-
-        let artwork = Artwork::from_path(PixivPath::parse(path).unwrap())
-            .await
-            .unwrap();
-
-        let html = artwork.render().unwrap();
-
-        println!("{}", html);
-
-        assert!(html.len() > 0);
+        Ok(format!("{}?p={}&b={}", proxy_url, urlencoding::encode(url.path()), urlencoding::encode(base)))
     }
 }

@@ -1,4 +1,9 @@
+use std::env;
+
+use http::{HeaderValue, HeaderMap};
 use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
+use phixiv::pixiv::auth::PixivAuth;
+use thiserror::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -8,6 +13,12 @@ async fn main() -> Result<(), Error> {
         .init();
 
     run(service_fn(proxy_handler)).await
+}
+
+#[derive(Error, Debug)]
+enum ProxyError {
+    #[error("could not find query string params")]
+    QueryError,
 }
 
 async fn pass_response(response: reqwest::Response) -> Result<Response<Body>, Error> {
@@ -27,16 +38,45 @@ async fn pass_response(response: reqwest::Response) -> Result<Response<Body>, Er
     })
 }
 
-async fn proxy_handler(request: Request) -> Result<Response<Body>, Error> {
-    let pixiv_path = request.raw_http_path();
-    let pximg_url = format!("https://i.pximg.net{}", &pixiv_path);
-
+async fn handle_request(path: &str, base: &str) -> Result<Response<Body>, Error> {
     let client = reqwest::Client::new();
+
+    let auth = PixivAuth::login(&client, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?;
+
+    let pximg_url = format!("https://{}.pximg.net{}", &base, &path);
+
+    let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(10);
+
+    tracing::info!("{}", auth.access_token);
+
+    headers.append("app-os", "ios".parse().unwrap());
+    headers.append("app-os-version", "14.6".parse().unwrap());
+    headers.append("user-agent", "PixivIOSApp/7.13.3 (iOS 14.6; iPhone13,2)".parse().unwrap());
+    headers.append("Referer", "https://www.pixiv.net/".parse().unwrap());
+    headers.append("Authorization", format!("Bearer {}", auth.access_token).parse().unwrap());
+
     let image_response = client
         .get(&pximg_url)
-        .header("Referer", "https://www.pixiv.net/")
+        .headers(headers)
         .send()
         .await?;
 
+    tracing::info!("{:?}", image_response.status());
+
+    println!("{:?}", image_response.status());
+
     pass_response(image_response).await
+}
+
+async fn proxy_handler(request: Request) -> Result<Response<Body>, Error> {
+    let query = request.query_string_parameters();
+
+    let path = query.first("p").ok_or(ProxyError::QueryError)?;
+    let base = query.first("b").ok_or(ProxyError::QueryError)?;
+
+    if base.len() != 1 {
+        return Err(Box::new(ProxyError::QueryError));
+    }
+
+    handle_request(path, base).await
 }
