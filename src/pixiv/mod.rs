@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod artwork;
 mod response_payload;
 
