@@ -47,8 +47,6 @@ async fn handle_request(path: &str, base: &str) -> Result<Response<Body>, Error>
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(10);
 
-    tracing::info!("{}", auth.access_token);
-
     headers.append("app-os", "ios".parse().unwrap());
     headers.append("app-os-version", "14.6".parse().unwrap());
     headers.append("user-agent", "PixivIOSApp/7.13.3 (iOS 14.6; iPhone13,2)".parse().unwrap());
@@ -60,8 +58,6 @@ async fn handle_request(path: &str, base: &str) -> Result<Response<Body>, Error>
         .headers(headers)
         .send()
         .await?;
-
-    tracing::info!("{:?}", image_response.status());
 
     println!("{:?}", image_response.status());
 
