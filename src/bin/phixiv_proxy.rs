@@ -45,7 +45,7 @@ async fn handle_request(path: &str, base: &str) -> Result<Response<Body>, Error>
 
     let pximg_url = format!("https://{}.pximg.net{}", &base, &path);
 
-    let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(10);
+    let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
 
     headers.append("app-os", "ios".parse().unwrap());
     headers.append("app-os-version", "14.6".parse().unwrap());
