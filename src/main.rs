@@ -1,5 +1,3 @@
-use std::{net::SocketAddr, env};
-
 use axum::{response::Html, Router, routing::get};
 
 #[tokio::main]
@@ -11,13 +9,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(handler));
 
-    let addr = SocketAddr::from((
-        [127, 0, 0, 1],
-        env::var("PORT")
-            .unwrap_or_else(|_| "3000".to_owned())
-            .parse::<u16>()
-            .unwrap()
-    ));
+    let addr = "[::]:3000".parse().unwrap();
 
     tracing::info!("Listening on {}", addr);
     
