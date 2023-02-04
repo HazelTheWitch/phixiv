@@ -59,8 +59,6 @@ async fn handle_request(path: &str, base: &str) -> Result<Response<Body>, Error>
         .send()
         .await?;
 
-    println!("{:?}", image_response.status());
-
     pass_response(image_response).await
 }
 
