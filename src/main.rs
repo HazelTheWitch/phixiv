@@ -45,7 +45,7 @@ async fn main() {
 
     let addr = "[::]:3000".parse().unwrap();
 
-    tracing::info!("Listening on {}", addr);
+    tracing::info!("Listening on: {}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
