@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::{body::Body, extract::Host, routing::get, Router};
+use axum::{body::Body, extract::Host, routing::get, Router, response::Html};
 use http::Request;
 use phixiv::{embed::embed_router, phixiv::phixiv_router, proxy::proxy_router, PhixivState};
 use tokio::sync::RwLock;
@@ -24,7 +24,6 @@ async fn main() {
         .route(
             "/*path",
             get(|Host(hostname): Host, request: Request<Body>| async move {
-
                 match hostname.split_once(".") {
                     Some(("i", _)) => {
                         tracing::info!("Hostname: i");
@@ -41,6 +40,7 @@ async fn main() {
                 }
             }),
         )
+        .fallback(fallback)
         .with_state(state);
 
     let addr = "[::]:3000".parse().unwrap();
@@ -51,4 +51,8 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+async fn fallback() -> Html<&'static str> {
+    Html("Could not find this page.")
 }
