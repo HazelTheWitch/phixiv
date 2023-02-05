@@ -11,12 +11,12 @@ use axum::{
 use http::{HeaderMap, HeaderValue, StatusCode};
 use tokio::sync::RwLock;
 
-use crate::{auth_middleware, PhixivState};
+use crate::{auth_middleware, PhixivState, handle_error};
 
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
     OriginalUri(uri): OriginalUri,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     let suffix = uri
         .path_and_query()
         .map(|path_and_query| path_and_query.as_str())
@@ -38,8 +38,8 @@ pub async fn proxy_handler(
     headers.append(
         "Authorization",
         format!("Bearer {}", state.auth.access_token)
-            .parse()
-            .unwrap(),
+            .parse::<HeaderValue>()
+            .map_err(|e| handle_error(e.into()))?,
     );
 
     let client = reqwest::Client::new();
@@ -49,7 +49,7 @@ pub async fn proxy_handler(
         .headers(headers)
         .send()
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| handle_error(e.into()))?;
 
     let stream = image_response.bytes_stream();
 

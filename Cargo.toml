@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.69"
 askama = { git = "https://github.com/djc/askama.git" }
 axum = { version = "0.6", features = ["original-uri"] }
 dotenvy = "0.15.6"

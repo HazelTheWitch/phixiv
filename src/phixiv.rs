@@ -1,54 +1,37 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{OriginalUri, Path, State},
+    extract::{Path, State},
     middleware,
-    response::{Html, IntoResponse, Redirect},
+    response::Html,
     routing::get,
     Router,
 };
-use http::{StatusCode, Uri};
+use http::StatusCode;
 use tokio::sync::RwLock;
 
 use crate::{
     auth_middleware,
     pixiv::artwork::{Artwork, ArtworkPath},
-    PhixivState,
+    PhixivState, handle_error, pixiv_redirect,
 };
-
-async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse {
-    tracing::info!("Unknown uri: {} redirecting to pixiv.", uri);
-
-    let Some(path_and_query) = uri.path_and_query() else {
-        return Redirect::temporary("https://www.pixiv.net/");
-    };
-
-    let redirect_uri = Uri::builder()
-        .scheme("https")
-        .authority("www.pixiv.net")
-        .path_and_query(path_and_query.as_str())
-        .build()
-        .unwrap();
-
-    Redirect::temporary(&redirect_uri.to_string())
-}
 
 pub async fn artwork_handler(
     Path(path): Path<ArtworkPath>,
     State(state): State<Arc<RwLock<PhixivState>>>,
-) -> Result<Html<String>, StatusCode> {
+) -> Result<Html<String>, (StatusCode, String)> {
     let state = state.read().await;
 
     tracing::info!("Access Token: {}", &state.auth.access_token);
 
     let artwork = Artwork::from_path(path, &state.auth.access_token)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| handle_error(e.into()))?;
 
     Ok(Html(
         artwork
             .render_minified()
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            .map_err(|e| handle_error(e.into()))?,
     ))
 }
 

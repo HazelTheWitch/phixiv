@@ -6,8 +6,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-use axum::{extract::State, middleware::Next, response::Response};
-use http::{Request, StatusCode};
+use axum::{extract::{State, OriginalUri}, middleware::Next, response::{Response, IntoResponse, Redirect}};
+use http::{Request, StatusCode, Uri};
 use pixiv::auth::{AuthError, PixivAuth};
 use reqwest::Client;
 use tokio::sync::RwLock;
@@ -16,6 +16,23 @@ pub mod phixiv;
 pub mod pixiv;
 
 const TOKEN_DURATION: u64 = 3500;
+
+pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse {
+    tracing::info!("Unknown uri: {} redirecting to pixiv.", uri);
+
+    let Some(path_and_query) = uri.path_and_query() else {
+        return Redirect::temporary("https://www.pixiv.net/");
+    };
+
+    let redirect_uri = Uri::builder()
+        .scheme("https")
+        .authority("www.pixiv.net")
+        .path_and_query(path_and_query.as_str())
+        .build()
+        .unwrap();
+
+    Redirect::temporary(&redirect_uri.to_string())
+}
 
 #[derive(Clone)]
 pub struct PhixivState {
@@ -48,18 +65,27 @@ pub async fn auth_middleware<B>(
     request: Request<B>,
     next: Next<B>,
 ) -> Result<Response, StatusCode> {
-    {
+    let requires_refresh = {
+        let state = state.read().await;
+        Instant::now() > state.expires_after
+    };
+
+    if requires_refresh {
         let mut state = state.write().await;
 
-        tracing::info!("Obtained State Lock");
-
-        if Instant::now() > state.expires_after {
-            state
-                .refresh()
-                .await
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        }
+        state
+            .refresh()
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
     }
 
     Ok(next.run(request).await)
+}
+
+
+pub fn handle_error(err: anyhow::Error) -> (StatusCode, String) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        format!("{}", err),
+    )
 }

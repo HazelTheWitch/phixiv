@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use axum::{body::Body, extract::Host, routing::get, Router, response::Html};
+use axum::{body::Body, extract::Host, routing::get, Router};
 use http::Request;
-use phixiv::{embed::embed_router, phixiv::phixiv_router, proxy::proxy_router, PhixivState};
+use phixiv::{embed::embed_router, phixiv::phixiv_router, proxy::proxy_router, PhixivState, pixiv_redirect};
 use tokio::sync::RwLock;
 use tower::ServiceExt;
 
@@ -15,9 +15,7 @@ async fn main() {
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
 
     let phixiv = phixiv_router(state.clone());
-
     let embed = embed_router();
-
     let proxy = proxy_router(state.clone());
 
     let app = Router::new()
@@ -40,7 +38,7 @@ async fn main() {
                 }
             }),
         )
-        .fallback(fallback)
+        .fallback(pixiv_redirect)
         .with_state(state);
 
     let addr = "[::]:3000".parse().unwrap();
@@ -51,8 +49,4 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
-}
-
-async fn fallback() -> Html<&'static str> {
-    Html("Could not find this page.")
 }
