@@ -51,6 +51,8 @@ pub async fn auth_middleware<B>(
     {
         let mut state = state.write().await;
 
+        tracing::info!("Obtained State Lock");
+
         if Instant::now() > state.expires_after {
             state
                 .refresh()
