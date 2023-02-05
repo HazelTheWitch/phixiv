@@ -62,7 +62,7 @@ impl Artwork {
     pub fn image_proxy_url(url: &str) -> Result<String, ArtworkError> {
         let url = url::Url::parse(url)?;
 
-        Ok(format!("https://i.pximg.net{}", url.path()))
+        Ok(format!("{}{}", env::var("PROXY_URL").unwrap(), url.path()))
     }
 
     async fn app_request(
