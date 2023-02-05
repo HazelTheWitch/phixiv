@@ -24,10 +24,20 @@ async fn main() {
         .route(
             "/*path",
             get(|Host(hostname): Host, request: Request<Body>| async move {
+
                 match hostname.split_once(".") {
-                    Some(("i", _)) => proxy.oneshot(request).await,
-                    Some(("e", _)) => embed.oneshot(request).await,
-                    _ => phixiv.oneshot(request).await,
+                    Some(("i", _)) => {
+                        tracing::info!("Hostname: i");
+                        proxy.oneshot(request).await
+                    },
+                    Some(("e", _)) => {
+                        tracing::info!("Hostname: e");
+                        embed.oneshot(request).await
+                    },
+                    _ => {
+                        tracing::info!("Hostname: None");
+                        phixiv.oneshot(request).await
+                    },
                 }
             }),
         )

@@ -39,6 +39,8 @@ pub async fn artwork_handler(
 ) -> Result<Html<String>, StatusCode> {
     let state = state.read().await;
 
+    tracing::info!("Access Token: {}", &state.auth.access_token);
+
     let artwork = Artwork::from_path(path, &state.auth.access_token)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

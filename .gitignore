@@ -1,3 +1,4 @@
 /target
 Cargo.lock
 *.bak
+commands.txt
