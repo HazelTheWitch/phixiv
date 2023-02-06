@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.69"
 askama = { git = "https://github.com/djc/askama.git" }
-axum = { version = "0.6", features = ["original-uri"] }
+axum = { version = "0.6", features = ["original-uri", "headers"] }
 dotenvy = "0.15.6"
 http = "0.2.8"
 isbot = "0.1"
