@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, env};
 
 use axum::{body::Body, extract::Host, routing::get, Router};
 use http::Request;
@@ -41,7 +41,7 @@ async fn main() {
         .fallback(pixiv_redirect)
         .with_state(state);
 
-    let addr = "[::]:3000".parse().unwrap();
+    let addr = format!("[::]:{}", env::var("PORT").unwrap_or("3000".to_owned())).parse().unwrap();
 
     tracing::info!("Listening on: {}", addr);
 
