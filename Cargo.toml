@@ -24,3 +24,4 @@ urlencoding = "2.1.2"
 
 [features]
 small_images = []
+bot_filtering = []

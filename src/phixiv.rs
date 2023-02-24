@@ -3,12 +3,15 @@ use std::sync::Arc;
 use axum::{
     extract::{Path, State},
     middleware::{self, Next},
-    response::{Html, IntoResponse, Redirect, Response},
+    response::{Html, Response},
     routing::get,
     Router,
 };
+
+#[cfg(feature = "bot_filtering")]
+use axum::response::{IntoResponse, Redirect};
+
 use http::{Request, StatusCode};
-use isbot::Bots;
 use tokio::sync::RwLock;
 
 use crate::{
@@ -35,21 +38,24 @@ pub async fn artwork_handler(
 }
 
 pub async fn redirect_middleware<B>(request: Request<B>, next: Next<B>) -> Response {
-    let bots = Bots::default();
+    #[cfg(feature = "bot_filtering")]
+    {
+        let bots = isbot::Bots::default();
 
-    if let Some(Ok(user_agent)) = request.headers().get("User-Agent").map(|h| h.to_str()) {
-        if !bots.is_bot(user_agent) {
-            tracing::info!("Non-bot request, redirecting to pixiv.");
+        if let Some(Ok(user_agent)) = request.headers().get("User-Agent").map(|h| h.to_str()) {
+            if !bots.is_bot(user_agent) {
+                tracing::info!("Non-bot request, redirecting to pixiv.");
 
-            let uri = request.uri();
+                let uri = request.uri();
 
-            let path_and_query = match uri.path_and_query() {
-                Some(path_and_query) => path_and_query.as_str(),
-                None => "",
-            };
+                let path_and_query = match uri.path_and_query() {
+                    Some(path_and_query) => path_and_query.as_str(),
+                    None => "",
+                };
 
-            return Redirect::temporary(&format!("http://www.pixiv.net{path_and_query}"))
-                .into_response();
+                return Redirect::temporary(&format!("http://www.pixiv.net{path_and_query}"))
+                    .into_response();
+            }
         }
     }
 
