@@ -6,7 +6,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use axum::{extract::{State, OriginalUri}, middleware::Next, response::{Response, IntoResponse, Redirect}};
+use axum::{
+    extract::{OriginalUri, State},
+    middleware::Next,
+    response::{IntoResponse, Redirect, Response},
+};
 use http::{Request, StatusCode, Uri};
 use pixiv::auth::{AuthError, PixivAuth};
 use reqwest::Client;
@@ -82,10 +86,6 @@ pub async fn auth_middleware<B>(
     Ok(next.run(request).await)
 }
 
-
 pub fn handle_error(err: anyhow::Error) -> (StatusCode, String) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        format!("{}", err),
-    )
+    (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", err))
 }

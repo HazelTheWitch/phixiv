@@ -11,7 +11,7 @@ use axum::{
 use http::{HeaderMap, HeaderValue, StatusCode};
 use tokio::sync::RwLock;
 
-use crate::{auth_middleware, PhixivState, handle_error};
+use crate::{auth_middleware, handle_error, PhixivState};
 
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,

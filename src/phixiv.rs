@@ -3,18 +3,18 @@ use std::sync::Arc;
 use axum::{
     extract::{Path, State},
     middleware::{self, Next},
-    response::{Html, Redirect, Response, IntoResponse},
+    response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router,
 };
-use http::{StatusCode, Request};
+use http::{Request, StatusCode};
 use isbot::Bots;
 use tokio::sync::RwLock;
 
 use crate::{
-    auth_middleware,
+    auth_middleware, handle_error,
     pixiv::artwork::{Artwork, ArtworkPath},
-    PhixivState, handle_error, pixiv_redirect,
+    pixiv_redirect, PhixivState,
 };
 
 pub async fn artwork_handler(
@@ -34,10 +34,7 @@ pub async fn artwork_handler(
     ))
 }
 
-pub async fn redirect_middleware<B>(
-    request: Request<B>,
-    next: Next<B>,
-) -> Response {
+pub async fn redirect_middleware<B>(request: Request<B>, next: Next<B>) -> Response {
     let bots = Bots::default();
 
     if let Some(Ok(user_agent)) = request.headers().get("User-Agent").map(|h| h.to_str()) {
@@ -51,7 +48,8 @@ pub async fn redirect_middleware<B>(
                 None => "",
             };
 
-            return Redirect::temporary(&format!("http://www.pixiv.net{}", path_and_query)).into_response();
+            return Redirect::temporary(&format!("http://www.pixiv.net{}", path_and_query))
+                .into_response();
         }
     }
 
