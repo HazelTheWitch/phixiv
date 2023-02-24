@@ -27,5 +27,5 @@ jobs:
           cd ${{ secrets.REPOSITORY_DIRECTORY }}
           git checkout main
           git pull
-          cargo install --path .
+          ${{ secrets.CARGO_PATH }} install --path .
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S systemctl restart phixiv
