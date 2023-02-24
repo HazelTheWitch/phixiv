@@ -8,6 +8,9 @@ use phixiv::{
 use tokio::sync::RwLock;
 use tower::ServiceExt;
 
+use tower_http::{normalize_path::NormalizePathLayer, trace::{TraceLayer, DefaultOnEos, DefaultOnRequest}};
+use tracing::Level;
+
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
@@ -41,6 +44,8 @@ async fn main() {
             }),
         )
         .fallback(pixiv_redirect)
+        .layer(NormalizePathLayer::trim_trailing_slash())
+        .layer(TraceLayer::new_for_http())
         .with_state(state);
 
     let addr = format!("[::]:{}", env::var("PORT").unwrap_or("3000".to_owned()))
