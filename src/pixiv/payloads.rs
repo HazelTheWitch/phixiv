@@ -1,16 +1,16 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)] 
 pub struct AppReponse {
     pub illust: IllustrationResponse,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)] 
 pub struct IllustrationResponse {
     pub image_urls: ImageUrls,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)] 
 pub struct ImageUrls {
     pub large: String,
     pub medium: String,
@@ -25,7 +25,7 @@ pub struct AjaxResponse {
 pub struct AjaxBody {
     pub title: String,
     pub description: String,
-    pub alt: String,
+    pub tags: Tags,
     #[serde(rename = "userId")]
     pub author_id: String,
     #[serde(rename = "userName")]
@@ -33,6 +33,23 @@ pub struct AjaxBody {
     #[serde(rename = "extraData")]
     pub extra_data: AjaxExtraData,
 }
+
+#[derive(Debug, Deserialize)] 
+pub struct Tags {
+    pub tags: Vec<Tag>,
+}
+
+#[derive(Debug, Deserialize)] 
+pub struct Tag {
+    pub tag: String,
+    pub translation: Option<TagTranslation>,
+}
+
+#[derive(Debug, Deserialize)] 
+pub struct TagTranslation {
+    pub en: String,
+}
+
 
 #[derive(Debug, Deserialize)]
 pub struct AjaxExtraData {
@@ -44,12 +61,12 @@ pub struct AjaxMeta {
     pub canonical: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)] 
 pub struct AuthPayload {
     pub response: AuthResponse,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)] 
 pub struct AuthResponse {
     pub access_token: String,
     pub refresh_token: String,

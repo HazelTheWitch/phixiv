@@ -1,3 +1,5 @@
+#![feature(iter_intersperse)]
+
 pub mod embed;
 pub mod proxy;
 use std::{

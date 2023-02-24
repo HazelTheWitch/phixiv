@@ -119,8 +119,18 @@ impl Artwork {
 
         let body = ajax_response.body;
 
+        let tag_string = body.tags.tags
+            .into_iter()
+            .map(|t| t
+                .translation
+                .map(|t| t.en)
+                .unwrap_or(t.tag)
+            )
+            .intersperse_with(|| String::from(", "))
+            .collect::<String>();
+
         let description = if body.description.is_empty() {
-            body.alt.clone()
+            tag_string.clone()
         } else {
             body.description
         };
@@ -133,7 +143,7 @@ impl Artwork {
             title: body.title,
             description,
             url: body.extra_data.meta.canonical,
-            alt_text: body.alt,
+            alt_text: tag_string,
             author_name: body.author_name,
             author_id: body.author_id,
             embed_url: env::var("EMBED_URL").unwrap(),
