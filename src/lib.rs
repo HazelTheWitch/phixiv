@@ -87,5 +87,5 @@ pub async fn auth_middleware<B>(
 }
 
 pub fn handle_error(err: anyhow::Error) -> (StatusCode, String) {
-    (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", err))
+    (StatusCode::INTERNAL_SERVER_ERROR, format!("{err}"))
 }

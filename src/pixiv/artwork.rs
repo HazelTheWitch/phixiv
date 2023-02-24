@@ -83,7 +83,7 @@ impl Artwork {
         headers.append("host", "app-api.pixiv.net".parse().unwrap());
         headers.append(
             "Authorization",
-            format!("Bearer {}", access_token).parse().unwrap(),
+            format!("Bearer {access_token}").parse().unwrap(),
         );
 
         Ok(client
@@ -110,7 +110,7 @@ impl Artwork {
         let client = Client::new();
 
         let (app, ajax) = tokio::join!(
-            Artwork::app_request(&client, &path, &access_token),
+            Artwork::app_request(&client, &path, access_token),
             Artwork::ajax_request(&client, &path),
         );
 

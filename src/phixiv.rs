@@ -48,7 +48,7 @@ pub async fn redirect_middleware<B>(request: Request<B>, next: Next<B>) -> Respo
                 None => "",
             };
 
-            return Redirect::temporary(&format!("http://www.pixiv.net{}", path_and_query))
+            return Redirect::temporary(&format!("http://www.pixiv.net{path_and_query}"))
                 .into_response();
         }
     }

@@ -22,7 +22,7 @@ pub async fn proxy_handler(
         .map(|path_and_query| path_and_query.as_str())
         .unwrap_or_default();
 
-    let pximg_url = format!("https://i.pximg.net{}", suffix);
+    let pximg_url = format!("https://i.pximg.net{suffix}");
 
     let state = state.read().await;
 

@@ -8,8 +8,7 @@ use phixiv::{
 use tokio::sync::RwLock;
 use tower::ServiceExt;
 
-use tower_http::{normalize_path::NormalizePathLayer, trace::{TraceLayer, DefaultOnEos, DefaultOnRequest}};
-use tracing::Level;
+use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
 
 #[tokio::main]
 async fn main() {
@@ -27,7 +26,7 @@ async fn main() {
         .route(
             "/*path",
             get(|Host(hostname): Host, request: Request<Body>| async move {
-                match hostname.split_once(".") {
+                match hostname.split_once('.') {
                     Some(("i", _)) => {
                         tracing::info!("Hostname: i.*");
                         proxy.oneshot(request).await
