@@ -129,15 +129,13 @@ impl Artwork {
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
 
-        let description = format!("{}\n{}", body.description, tag_string);
-
         Ok(Self {
             #[cfg(feature = "small_images")]
             image_proxy_url: Artwork::image_proxy_url(&app_response.illust.image_urls.medium)?,
             #[cfg(not(feature = "small_images"))]
             image_proxy_url: Artwork::image_proxy_url(&app_response.illust.image_urls.large)?,
             title: body.title,
-            description,
+            description: body.description,
             url: body.extra_data.meta.canonical,
             alt_text: tag_string,
             author_name: body.author_name,
