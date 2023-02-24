@@ -129,11 +129,7 @@ impl Artwork {
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
 
-        let description = if body.description.is_empty() {
-            tag_string.clone()
-        } else {
-            body.description
-        };
+        let description = format!("{}\n{}", body.description, tag_string);
 
         Ok(Self {
             #[cfg(feature = "small_images")]
