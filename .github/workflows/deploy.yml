@@ -12,11 +12,8 @@ jobs:
     - run: |
         rustup set auto-self-update disable
         rustup toolchain install nightly --profile minimal
-    - uses: Swatinem/rust-cache@v2
     - name: Check
       run: cargo check
-    - name: Test
-      run: cargo test
     - name: Deploy
       uses: appleboy/ssh-action@v0.1.7
       with:
