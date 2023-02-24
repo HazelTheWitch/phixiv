@@ -19,7 +19,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
-        script: &&
+        script: |
           cd ${{ secrets.REPOSITORY_DIRECTORY }}
           git checkout main
           git pull
