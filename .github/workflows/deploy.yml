@@ -28,4 +28,4 @@ jobs:
           git checkout main
           git pull
           cargo install --path .
-          systemctl restart phixiv
+          sudo systemctl restart phixiv
