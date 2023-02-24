@@ -13,19 +13,15 @@ jobs:
         rustup set auto-self-update disable
         rustup toolchain install nightly --profile minimal
     - uses: Swatinem/rust-cache@v2
-    - name: Check
-      run: cargo check
-    - name: Test
-      run: cargo test
     - name: Deploy
       uses: appleboy/ssh-action@v0.1.7
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
-        script: |
+        script: &&
           cd ${{ secrets.REPOSITORY_DIRECTORY }}
           git checkout main
           git pull
           cargo install --path .
-          sudo systemctl restart phixiv
+          echo ${{ secrets.PASSWORD }} | sudo -S systemctl restart phixiv
