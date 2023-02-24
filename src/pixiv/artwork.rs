@@ -72,7 +72,7 @@ impl Artwork {
     ) -> Result<AppReponse, PixivError> {
         let params = HashMap::from([("illust_id", &path.id)]);
 
-        let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(10);
+        let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
 
         headers.append("app-os", "ios".parse().unwrap());
         headers.append("app-os-version", "14.6".parse().unwrap());
