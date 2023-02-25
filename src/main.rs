@@ -12,8 +12,6 @@ use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().ok();
-
     tracing_subscriber::fmt::fmt().with_file(true).init();
 
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
