@@ -7,7 +7,6 @@ edition = "2021"
 anyhow = "1.0.69"
 askama = { git = "https://github.com/djc/askama.git", rev = "32f0799" }
 axum = { version = "0.6", features = ["original-uri", "headers"] }
-dotenvy = "0.15.6"
 http = "0.2.8"
 isbot = "0.1"
 minify-html = "0.10"
