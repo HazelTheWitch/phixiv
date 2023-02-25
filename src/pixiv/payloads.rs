@@ -8,6 +8,23 @@ pub struct AppReponse {
 #[derive(Debug, Deserialize)] 
 pub struct IllustrationResponse {
     pub image_urls: ImageUrls,
+    pub meta_single_page: MetaSinglePage,
+    pub meta_pages: Vec<MetaPage>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MetaSinglePage {
+    pub original_image_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MetaPage {
+    pub image_urls: MetaPageImageUrls,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MetaPageImageUrls {
+    pub original: String,
 }
 
 #[derive(Debug, Deserialize)] 

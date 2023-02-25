@@ -1,6 +1,7 @@
 use std::{env, sync::Arc};
 
 use axum::{body::Body, extract::Host, routing::get, Router};
+use dotenvy::dotenv;
 use http::Request;
 use phixiv::{
     embed::embed_router, phixiv::phixiv_router, pixiv_redirect, proxy::proxy_router, PhixivState,
@@ -12,6 +13,8 @@ use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
 
 #[tokio::main]
 async fn main() {
+    dotenv().unwrap();
+    
     tracing_subscriber::fmt::fmt().with_file(true).init();
 
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
