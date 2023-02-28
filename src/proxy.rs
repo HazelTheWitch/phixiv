@@ -29,7 +29,13 @@ pub async fn proxy_handler(
 
     if let Some(image) = cache.get(suffix) {
         tracing::info!("Using cached image for : {suffix}");
-        return Ok(image.into_response());
+
+        let response = image.into_response();
+
+        let content_type = response.headers().get("Content-Type");
+
+        tracing::info!("{:?}", content_type);
+        return Ok(response);
     }
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
@@ -61,7 +67,13 @@ pub async fn proxy_handler(
 
     cache.insert(suffix.to_owned(), image.clone());
 
-    Ok(image.into_response())
+    let response = image.into_response();
+
+    let content_type = response.headers().get("Content-Type");
+
+    tracing::info!("{:?}", content_type);
+
+    Ok(response)
 }
 
 pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {
