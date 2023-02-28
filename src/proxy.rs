@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
 use axum::{
-    body::StreamBody,
     extract::{OriginalUri, State},
     middleware,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::get,
     Router,
 };
@@ -17,7 +16,7 @@ use crate::{auth_middleware, handle_error, PhixivState};
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
     OriginalUri(uri): OriginalUri,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
+) -> Result<Response, (StatusCode, String)> {
     let suffix = uri
         .path_and_query()
         .map(|path_and_query| path_and_query.as_str())
@@ -26,6 +25,13 @@ pub async fn proxy_handler(
     let pximg_url = format!("https://i.pximg.net{suffix}");
 
     let state = state.read().await;
+
+    let cache = state.image_cache.clone();
+
+    if let Some(image) = cache.get(suffix) {
+        tracing::info!("Using cached image for : {suffix}");
+        return Ok(image.into_response());
+    }
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
 
@@ -52,11 +58,11 @@ pub async fn proxy_handler(
         .await
         .map_err(|e| handle_error(e.into()))?;
 
-    let stream = image_response.bytes_stream();
+    let image = image_response.bytes().await.map_err(|e| handle_error(e.into()))?;
 
-    let body = StreamBody::new(stream);
+    cache.insert(suffix.to_owned(), image.clone());
 
-    Ok(body)
+    Ok(image.into_response())
 }
 
 pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {

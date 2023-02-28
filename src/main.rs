@@ -20,7 +20,7 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .init();
 
-    let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
+    let state = Arc::new(RwLock::new(PhixivState::new(64 * 1024 * 1024).await.unwrap()));
 
     let phixiv = phixiv_router(state.clone());
     let embed = embed_router();
