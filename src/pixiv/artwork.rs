@@ -119,13 +119,11 @@ impl Artwork {
 
         let body = ajax_response.body;
 
-        let tag_string = body.tags.tags
+        let tag_string = body
+            .tags
+            .tags
             .into_iter()
-            .map(|t| t
-                .translation
-                .map(|t| t.en)
-                .unwrap_or(t.tag)
-            )
+            .map(|t| t.translation.map(|t| t.en).unwrap_or(t.tag))
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
 

@@ -1,11 +1,11 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct AppReponse {
     pub illust: IllustrationResponse,
 }
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct IllustrationResponse {
     pub image_urls: ImageUrls,
     pub meta_single_page: MetaSinglePage,
@@ -27,7 +27,7 @@ pub struct MetaPageImageUrls {
     pub original: String,
 }
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct ImageUrls {
     pub large: String,
     pub medium: String,
@@ -51,22 +51,21 @@ pub struct AjaxBody {
     pub extra_data: AjaxExtraData,
 }
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct Tags {
     pub tags: Vec<Tag>,
 }
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct Tag {
     pub tag: String,
     pub translation: Option<TagTranslation>,
 }
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct TagTranslation {
     pub en: String,
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct AjaxExtraData {
@@ -78,12 +77,12 @@ pub struct AjaxMeta {
     pub canonical: String,
 }
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct AuthPayload {
     pub response: AuthResponse,
 }
 
-#[derive(Debug, Deserialize)] 
+#[derive(Debug, Deserialize)]
 pub struct AuthResponse {
     pub access_token: String,
     pub refresh_token: String,

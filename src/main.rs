@@ -9,12 +9,16 @@ use tokio::sync::RwLock;
 use tower::ServiceExt;
 
 use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
+use tracing::Level;
 
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
 
-    tracing_subscriber::fmt::fmt().with_file(true).init();
+    tracing_subscriber::fmt::fmt()
+        .with_file(true)
+        .with_max_level(Level::DEBUG)
+        .init();
 
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
 
