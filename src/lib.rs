@@ -13,7 +13,9 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Redirect, Response},
 };
+use bytes::Bytes;
 use http::{Request, StatusCode, Uri};
+use moka::sync::Cache;
 use pixiv::auth::{AuthError, PixivAuth};
 use reqwest::Client;
 use tokio::sync::RwLock;
@@ -44,15 +46,17 @@ pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse 
 pub struct PhixivState {
     pub auth: PixivAuth,
     pub expires_after: Instant,
+    pub image_cache: Cache<String, Bytes>,
     client: Client,
 }
 
 impl PhixivState {
-    pub async fn new() -> Result<Self, AuthError> {
+    pub async fn new(max_capacity: u64) -> Result<Self, AuthError> {
         let client = Client::new();
         Ok(Self {
             auth: PixivAuth::login(&client, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?,
             expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION),
+            image_cache: Cache::builder().max_capacity(max_capacity).weigher(|_, bytes: &Bytes| bytes.len() as u32).build(),
             client,
         })
     }
