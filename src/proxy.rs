@@ -10,7 +10,6 @@ use axum::{
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use tokio::sync::RwLock;
-use tower_http::compression::CompressionLayer;
 
 use crate::{auth_middleware, handle_error, PhixivState};
 
