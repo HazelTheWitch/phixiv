@@ -142,10 +142,16 @@ impl Artwork {
             }
         })?;
 
+        let description = if body.description.is_empty() {
+            tag_string.clone()
+        } else {
+            body.description
+        };
+
         Ok(Self {
             image_proxy_url,
             title: body.title,
-            description: body.description,
+            description,
             url: body.extra_data.meta.canonical,
             alt_text: tag_string,
             author_name: body.author_name,
