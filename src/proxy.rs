@@ -64,5 +64,4 @@ pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {
         .route("/*path", get(proxy_handler))
         .with_state(state.clone())
         .route_layer(middleware::from_fn_with_state(state, auth_middleware))
-        .layer(CompressionLayer::new())
 }
