@@ -63,7 +63,7 @@ pub async fn proxy_handler(
                 data: bytes,
             };
 
-            cache.insert(path, image_body.clone());
+            cache.insert(path, image_body.clone()).await;
 
             Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
         },
