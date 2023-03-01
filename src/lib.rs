@@ -27,10 +27,12 @@ pub mod pixiv;
 const TOKEN_DURATION: u64 = 3500;
 pub const CACHE_SIZE: u64 = 128 * 1024 * 1024;
 
+#[instrument]
 pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse {
     tracing::info!("Unknown uri: {} redirecting to pixiv.", uri);
 
     let Some(path_and_query) = uri.path_and_query() else {
+        tracing::warn!("Could not find path and query, redirecting to the homepage.");
         return Redirect::temporary("https://www.pixiv.net/");
     };
 
@@ -72,6 +74,7 @@ impl PhixivState {
         })
     }
 
+    #[instrument(skip(self))]
     pub async fn refresh(&mut self) -> Result<(), AuthError> {
         self.auth =
             PixivAuth::login(&self.client, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?;
@@ -93,6 +96,7 @@ pub async fn auth_middleware<B>(
     };
 
     if requires_refresh {
+        tracing::info!("Re-authorizing pixiv token.");
         let mut state = state.write().await;
 
         state

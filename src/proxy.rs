@@ -26,7 +26,7 @@ pub async fn proxy_handler(
     let cache = state.image_cache.clone();
 
     if let Some(image_body) = cache.get(&path) {
-        tracing::info!("Cache Hit: {path}");
+        tracing::info!("Retrieving cached image");
 
         return Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
     }
@@ -66,14 +66,14 @@ pub async fn proxy_handler(
                 data: bytes,
             };
 
-            tracing::info!("Caching: {}", &path);
+            tracing::info!("Caching image");
 
             cache.insert(path, image_body.clone()).await;
 
             Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
         },
         None => {
-            tracing::info!("Could not cache: {path}");
+            tracing::info!("Could not cache, defaulting to forwarding.");
             Ok(StreamBody::new(image_response.bytes_stream()).into_response())
         },
     }
