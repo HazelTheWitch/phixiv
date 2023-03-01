@@ -1,0 +1,29 @@
+name: Deploy Beta
+on:
+  push:
+    branches:
+    - beta
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - run: |
+        rustup set auto-self-update disable
+        rustup toolchain install nightly --profile minimal
+    - name: Check
+      run: cargo +nightly check --features bot_filtering
+    - name: Deploy
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        script: |
+          cd ${{ secrets.REPOSITORY_DIRECTORY }}
+          git checkout main
+          git pull
+          ${{ secrets.CARGO_PATH }} +nightly build --features bot_filtering
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /etc/phixiv/phixiv-beta
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S systemctl restart phixiv-beta
