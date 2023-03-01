@@ -8,7 +8,7 @@ pub struct EmbedRequest {
     #[serde(rename = "n")]
     pub author_name: String,
     #[serde(rename = "i")]
-    pub author_id: String,
+    pub author_id: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,10 +42,17 @@ pub async fn embed_handler(
         author_id,
     }): Query<EmbedRequest>,
 ) -> Json<EmbedResponse> {
-    Json(EmbedResponse::new(
-        author_name,
-        format!("https://www.pixiv.net/users/{}", encode(&author_id)),
-    ))
+    if let Some(author_id) = author_id {
+        Json(EmbedResponse::new(
+            author_name,
+            format!("https://www.pixiv.net/users/{}", encode(&author_id)),
+        ))
+    } else {
+        Json(EmbedResponse::new(
+            author_name,
+            String::from("https://www.pixiv.net/"),
+        ))
+    }
 }
 
 pub fn embed_router() -> Router {

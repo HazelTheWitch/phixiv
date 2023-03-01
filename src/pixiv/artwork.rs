@@ -40,7 +40,7 @@ pub struct Artwork {
     pub title: String,
     pub description: String,
     pub author_name: String,
-    pub author_id: String,
+    pub author_id: Option<String>,
     pub url: String,
     pub alt_text: String,
     pub host: String,
@@ -124,6 +124,8 @@ impl Artwork {
 
         let body = ajax_response.body;
 
+        let ai = app_response.illust.illust_ai_type == 2;
+
         let tag_string = body
             .tags
             .tags
@@ -170,8 +172,8 @@ impl Artwork {
             description,
             url: body.extra_data.meta.canonical,
             alt_text: tag_string,
-            author_name: body.author_name,
-            author_id: body.author_id,
+            author_name: if ai { String::from("AI Generated") } else { body.author_name },
+            author_id: if ai { None } else { Some(body.author_id) },
             host: env::var("HOST").unwrap(),
         })
     }

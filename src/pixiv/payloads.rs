@@ -12,6 +12,7 @@ pub struct IllustrationResponse {
     pub image_urls: ImageUrls,
     pub meta_single_page: MetaSinglePage,
     pub meta_pages: Vec<MetaPage>,
+    pub illust_ai_type: u8,
 }
 
 #[derive(Debug, Deserialize)]

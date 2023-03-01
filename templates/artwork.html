@@ -2,19 +2,24 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>{{ title|escape }}</title>
+    <title>{{ title }}</title>
     <meta content="phixiv" property="og:site_name" />
     <meta content="article" property="og:type" />
-    <meta content="{{ title|escape }}" property="og:title" />
-    <meta content="{{ description|escape }}" property="og:description" />
-    <meta content="{{ url|escape }}" property="og:url" />
-    <meta content="{{ image_proxy_url|escape }}" property="og:image" />
-    <meta content="{{ alt_text|escape }}" property="og:image:alt" />
+    <meta content="{{ title }}" property="og:title" />
+    <meta content="{{ description }}" property="og:description" />
+    <meta content="{{ url }}" property="og:url" />
+    <meta content="{{ image_proxy_url }}" property="og:image" />
+    <meta content="{{ alt_text }}" property="og:image:alt" />
     <meta content="summary_large_image" name="twitter:card" />
-    <meta http-equiv="Refresh" content="0; url='{{ url|escape }}'" />
-    <link rel="alternate" type="application/json+oembed" href="{{ host }}/e?i={{ author_id|escape }}&n={{ author_name|escape }}">
+    <meta http-equiv="Refresh" content="0; url='{{ url }}'" />
+    {% match author_id %}
+        {% when Some with (author) %}
+            <link rel="alternate" type="application/json+oembed" href="{{ host }}/e?i={{ author }}&n={{ author_name }}">
+        {% when None %}
+            <link rel="alternate" type="application/json+oembed" href="{{ host }}/e?n={{ author_name }}">
+    {% endmatch %}
 </head>
 <body>
-    <a href="{{ url|escape }}">You should have been redirected, here is a link to the original post.</a>
+    <a href="{{ url }}">You should have been redirected, here is a link to the original post.</a>
 </body>
 </html>
