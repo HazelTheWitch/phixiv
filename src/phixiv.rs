@@ -64,7 +64,6 @@ pub async fn redirect_middleware<B>(request: Request<B>, next: Next<B>) -> Respo
 
 pub fn phixiv_router(state: Arc<RwLock<PhixivState>>) -> Router {
     Router::new()
-        .route("/test", get(|| async { Html("Hello!") }))
         .route("/:language/artworks/:id", get(artwork_handler))
         .route("/artworks/:id", get(artwork_handler))
         .fallback(pixiv_redirect)
