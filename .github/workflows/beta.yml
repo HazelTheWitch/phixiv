@@ -13,7 +13,7 @@ jobs:
         rustup set auto-self-update disable
         rustup toolchain install nightly --profile minimal
     - name: Check
-      run: cargo +nightly check --features bot_filtering
+      run: cargo check --features bot_filtering
     - name: Deploy
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -24,6 +24,6 @@ jobs:
           cd ${{ secrets.REPOSITORY_DIRECTORY }}
           git checkout main
           git pull
-          ${{ secrets.CARGO_PATH }} +nightly build --features bot_filtering
+          ${{ secrets.CARGO_PATH }} build --features bot_filtering
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /usr/local/bin/phixiv-beta
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S systemctl restart phixiv-beta
