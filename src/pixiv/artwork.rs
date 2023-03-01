@@ -152,7 +152,7 @@ impl Artwork {
         #[cfg(not(feature = "small_images"))]
         let image_proxy_url = Artwork::image_proxy_url(&{
             match app_response.illust.meta_single_page.original_image_url {
-                Some(url) => url.clone(),
+                Some(url) => url,
                 None => match app_response.illust.meta_pages.get(0) {
                     Some(meta_page) => meta_page.image_urls.original.clone(),
                     None => app_response.illust.image_urls.large.clone(),
