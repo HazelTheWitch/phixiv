@@ -24,7 +24,7 @@ pub mod phixiv;
 pub mod pixiv;
 
 const TOKEN_DURATION: u64 = 3500;
-pub const CACHE_SIZE: u64 = 64 * 1024 * 1024;
+pub const CACHE_SIZE: u64 = 128 * 1024 * 1024;
 
 pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse {
     tracing::info!("Unknown uri: {} redirecting to pixiv.", uri);
