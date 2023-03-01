@@ -10,7 +10,6 @@ use axum::{
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use tokio::sync::RwLock;
-use tower_http::compression::CompressionLayer;
 
 use crate::{auth_middleware, handle_error, PhixivState, ImageBody, CACHE_SIZE};
 
@@ -24,7 +23,7 @@ pub async fn proxy_handler(
 
     let cache = state.image_cache.clone();
 
-    tracing::info!("Cache Size: {} / {}", cache.weighted_size(), CACHE_SIZE);
+    tracing::info!("Cache Size: {} / {} ({}%)", cache.weighted_size(), CACHE_SIZE, cache.weighted_size() * 100 / CACHE_SIZE);
 
     if let Some(image_body) = cache.get(&path) {
         tracing::info!("Using cached image for: {path}");
@@ -82,5 +81,4 @@ pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {
         .route("/*path", get(proxy_handler))
         .with_state(state.clone())
         .route_layer(middleware::from_fn_with_state(state, auth_middleware))
-        .layer(CompressionLayer::new())
 }
