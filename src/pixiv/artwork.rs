@@ -128,7 +128,13 @@ impl Artwork {
             .tags
             .tags
             .into_iter()
-            .map(|t| t.translation.map(|t| t.en).unwrap_or(t.tag))
+            .map(|t| {
+                if path.language == Some(String::from("en")) {
+                    return t.translation.map(|t| t.en).unwrap_or(t.tag);
+                } else {
+                    return t.tag;
+                }
+            })
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
 
