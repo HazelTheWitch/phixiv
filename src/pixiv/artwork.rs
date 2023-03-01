@@ -6,6 +6,7 @@ use minify_html::{minify, Cfg};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use tracing::instrument;
 
 use super::{
     payloads::{AjaxResponse, AppReponse},
@@ -26,7 +27,7 @@ pub enum ArtworkError {
     ImageURL,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct ArtworkPath {
     pub language: Option<String>,
     pub id: String,
@@ -46,6 +47,7 @@ pub struct Artwork {
 }
 
 impl Artwork {
+    #[instrument(skip(self))]
     pub fn render_minified(&self) -> Result<String, ArtworkError> {
         let html = self.render()?;
 
@@ -65,6 +67,7 @@ impl Artwork {
         Ok(format!("{}/i{}", env::var("HOST").unwrap(), url.path()))
     }
 
+    #[instrument(skip(client, access_token))]
     async fn app_request(
         client: &Client,
         path: &ArtworkPath,
@@ -96,6 +99,7 @@ impl Artwork {
             .await?)
     }
 
+    #[instrument(skip(client))]
     async fn ajax_request(client: &Client, path: &ArtworkPath) -> Result<AjaxResponse, PixivError> {
         let ajax_url = format!(
             "https://www.pixiv.net/ajax/illust/{}?lang={}",
@@ -106,6 +110,7 @@ impl Artwork {
         Ok(client.get(ajax_url).send().await?.json().await?)
     }
 
+    #[instrument(skip(access_token))]
     pub async fn from_path(path: ArtworkPath, access_token: &str) -> Result<Self, PixivError> {
         let client = Client::new();
 

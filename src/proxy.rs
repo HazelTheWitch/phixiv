@@ -10,9 +10,11 @@ use axum::{
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use tokio::sync::RwLock;
+use tracing::instrument;
 
-use crate::{auth_middleware, handle_error, PhixivState, ImageBody, CACHE_SIZE};
+use crate::{auth_middleware, handle_error, PhixivState, ImageBody};
 
+#[instrument(skip(state))]
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
     Path(path): Path<String>,
@@ -23,10 +25,8 @@ pub async fn proxy_handler(
 
     let cache = state.image_cache.clone();
 
-    tracing::info!("Cache Size: {} / {} ({}%)", cache.weighted_size(), CACHE_SIZE, cache.weighted_size() * 100 / CACHE_SIZE);
-
     if let Some(image_body) = cache.get(&path) {
-        tracing::info!("Using cached image for: {path}");
+        tracing::info!("Cache Hit: {path}");
 
         return Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
     }
@@ -66,11 +66,14 @@ pub async fn proxy_handler(
                 data: bytes,
             };
 
+            tracing::info!("Caching: {}", &path);
+
             cache.insert(path, image_body.clone()).await;
 
             Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
         },
         None => {
+            tracing::info!("Could not cache: {path}");
             Ok(StreamBody::new(image_response.bytes_stream()).into_response())
         },
     }

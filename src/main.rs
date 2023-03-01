@@ -6,7 +6,7 @@ use phixiv::{
 };
 use tokio::sync::RwLock;
 
-use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
+use tower_http::normalize_path::NormalizePathLayer;
 
 #[tokio::main]
 async fn main() {
@@ -27,8 +27,7 @@ async fn main() {
         .nest("/e", embed)
         .nest("/i", proxy)
         .fallback(pixiv_redirect)
-        .layer(NormalizePathLayer::trim_trailing_slash())
-        .layer(TraceLayer::new_for_http());
+        .layer(NormalizePathLayer::trim_trailing_slash());
 
     let addr = format!("[::]:{}", env::var("PORT").unwrap_or("3000".to_owned()))
         .parse()

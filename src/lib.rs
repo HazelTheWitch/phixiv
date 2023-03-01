@@ -19,6 +19,7 @@ use moka::future::Cache;
 use pixiv::auth::{AuthError, PixivAuth};
 use reqwest::Client;
 use tokio::sync::RwLock;
+use tracing::instrument;
 
 pub mod phixiv;
 pub mod pixiv;
@@ -80,6 +81,7 @@ impl PhixivState {
     }
 }
 
+#[instrument(skip(state, request, next))]
 pub async fn auth_middleware<B>(
     State(state): State<Arc<RwLock<PhixivState>>>,
     request: Request<B>,

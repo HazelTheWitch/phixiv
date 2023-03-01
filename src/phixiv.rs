@@ -13,6 +13,7 @@ use axum::response::{IntoResponse, Redirect};
 
 use http::{Request, StatusCode};
 use tokio::sync::RwLock;
+use tracing::instrument;
 
 use crate::{
     auth_middleware, handle_error,
@@ -20,6 +21,7 @@ use crate::{
     pixiv_redirect, PhixivState,
 };
 
+#[instrument(skip(state))]
 pub async fn artwork_handler(
     Path(path): Path<ArtworkPath>,
     State(state): State<Arc<RwLock<PhixivState>>>,
@@ -37,6 +39,7 @@ pub async fn artwork_handler(
     ))
 }
 
+#[instrument(skip(request, next))]
 pub async fn redirect_middleware<B>(request: Request<B>, next: Next<B>) -> Response {
     #[cfg(feature = "bot_filtering")]
     {

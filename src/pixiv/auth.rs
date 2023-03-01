@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use http::{HeaderMap, HeaderValue, StatusCode};
 use reqwest::Client;
 use thiserror::Error;
+use tracing::instrument;
 
 use super::payloads::AuthPayload;
 
@@ -24,6 +25,7 @@ pub struct PixivAuth {
 }
 
 impl PixivAuth {
+    #[instrument(skip(client, refresh_token))]
     pub async fn login(client: &Client, refresh_token: &str) -> Result<Self, AuthError> {
         let data = HashMap::from([
             ("client_id", CLIENT_ID),

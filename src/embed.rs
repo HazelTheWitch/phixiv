@@ -1,5 +1,6 @@
 use axum::{extract::Query, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 use urlencoding::encode;
 
 #[derive(Deserialize)]
@@ -34,6 +35,7 @@ impl EmbedResponse {
     }
 }
 
+#[instrument]
 pub async fn embed_handler(
     Query(EmbedRequest {
         author_name,
