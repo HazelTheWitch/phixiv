@@ -23,6 +23,8 @@ pub async fn proxy_handler(
 
     let cache = state.image_cache.clone();
 
+    tracing::info!("Cache Size: {} / {}", cache.weighted_size(), CACHE_SIZE);
+
     if let Some(image_body) = cache.get(&path) {
         tracing::info!("Using cached image for: {path}");
 
@@ -65,8 +67,6 @@ pub async fn proxy_handler(
             };
 
             cache.insert(path, image_body.clone()).await;
-
-            tracing::info!("Cache Size: {} / {}", cache.weighted_size(), CACHE_SIZE);
 
             Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
         },
