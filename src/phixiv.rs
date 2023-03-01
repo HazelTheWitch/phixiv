@@ -13,7 +13,7 @@ use axum::response::{IntoResponse, Redirect};
 
 use http::{Request, StatusCode};
 use tokio::sync::RwLock;
-use tracing::instrument;
+use tracing::{instrument, info};
 
 use crate::{
     auth_middleware, handle_error,
@@ -31,6 +31,8 @@ pub async fn artwork_handler(
     let artwork = Artwork::from_path(path, &state.auth.access_token)
         .await
         .map_err(|e| handle_error(e.into()))?;
+
+    info!("Parsed artwork");
 
     Ok(Html(
         artwork
