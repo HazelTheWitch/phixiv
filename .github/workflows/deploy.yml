@@ -24,5 +24,6 @@ jobs:
           cd ${{ secrets.REPOSITORY_DIRECTORY }}
           git checkout main
           git pull
-          ${{ secrets.CARGO_PATH }} +nightly install --features bot_filtering --path .
+          ${{ secrets.CARGO_PATH }} +nightly build --features bot_filtering
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /etc/phixiv/phixiv
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S systemctl restart phixiv

@@ -4,3 +4,5 @@ Cargo.lock
 commands.txt
 .env
 .vscode
+
+*.service
