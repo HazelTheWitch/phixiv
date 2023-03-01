@@ -23,7 +23,7 @@ async fn main() {
     let proxy = proxy_router(state.clone());
 
     let app = Router::new()
-        .nest("/", phixiv)
+        .merge(phixiv)
         .nest("/e", embed)
         .nest("/i", proxy)
         .fallback(pixiv_redirect)
