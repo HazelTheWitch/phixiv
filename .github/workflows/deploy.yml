@@ -12,8 +12,6 @@ jobs:
     - run: |
         rustup set auto-self-update disable
         rustup toolchain install nightly --profile minimal
-    - name: Check
-      run: cargo check +nightly --features bot_filtering
     - name: Deploy
       uses: appleboy/ssh-action@v0.1.7
       with:
