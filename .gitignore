@@ -3,3 +3,4 @@ Cargo.lock
 *.bak
 commands.txt
 .env
+.vscode

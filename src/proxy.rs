@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     body::StreamBody,
-    extract::{OriginalUri, State},
+    extract::{State, Path},
     middleware,
     response::IntoResponse,
     routing::get,
@@ -15,14 +15,9 @@ use crate::{auth_middleware, handle_error, PhixivState};
 
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
-    OriginalUri(uri): OriginalUri,
+    Path(path): Path<String>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let suffix = uri
-        .path_and_query()
-        .map(|path_and_query| path_and_query.as_str())
-        .unwrap_or_default();
-
-    let pximg_url = format!("https://i.pximg.net{suffix}");
+    let pximg_url = format!("https://i.pximg.net/{path}");
 
     let state = state.read().await;
 

@@ -42,7 +42,7 @@ pub struct Artwork {
     pub author_id: String,
     pub url: String,
     pub alt_text: String,
-    pub embed_url: String,
+    pub host: String,
 }
 
 impl Artwork {
@@ -62,7 +62,7 @@ impl Artwork {
     pub fn image_proxy_url(url: &str) -> Result<String, ArtworkError> {
         let url = url::Url::parse(url)?;
 
-        Ok(format!("{}{}", env::var("PROXY_URL").unwrap(), url.path()))
+        Ok(format!("{}/i{}", env::var("HOST").unwrap(), url.path()))
     }
 
     async fn app_request(
@@ -154,7 +154,7 @@ impl Artwork {
             alt_text: tag_string,
             author_name: body.author_name,
             author_id: body.author_id,
-            embed_url: env::var("EMBED_URL").unwrap(),
+            host: env::var("HOST").unwrap(),
         })
     }
 }

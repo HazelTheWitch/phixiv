@@ -47,5 +47,5 @@ pub async fn embed_handler(
 }
 
 pub fn embed_router() -> Router {
-    Router::new().route("/embed", get(embed_handler))
+    Router::new().route("/", get(embed_handler))
 }
