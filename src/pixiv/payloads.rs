@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -59,12 +61,7 @@ pub struct Tags {
 #[derive(Debug, Deserialize)]
 pub struct Tag {
     pub tag: String,
-    pub translation: Option<TagTranslation>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct TagTranslation {
-    pub en: String,
+    pub translation: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]
