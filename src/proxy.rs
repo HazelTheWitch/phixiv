@@ -10,7 +10,7 @@ use axum::{
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use tokio::sync::RwLock;
-use tracing::instrument;
+use tracing::{instrument, info};
 
 use crate::{auth_middleware, handle_error, PhixivState, ImageBody};
 
@@ -58,6 +58,7 @@ pub async fn proxy_handler(
 
     match image_response.headers().get("Content-Type") {
         Some(content_type) => {
+            info!("Recieved Content-Type {content_type}");
             let content_type = content_type.to_str().map_err(|e| handle_error(e.into()))?.to_string();
             let bytes = image_response.bytes().await.map_err(|e| handle_error(e.into()))?;
 
