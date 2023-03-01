@@ -20,7 +20,7 @@ jobs:
         password: ${{ secrets.PASSWORD }}
         script: |
           cd ${{ secrets.REPOSITORY_DIRECTORY }}
-          git checkout main
+          git checkout beta
           git pull
           ${{ secrets.CARGO_PATH }} build --release --features bot_filtering
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /usr/local/bin/phixiv-beta
