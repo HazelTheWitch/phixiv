@@ -25,5 +25,5 @@ jobs:
           git checkout main
           git pull
           ${{ secrets.CARGO_PATH }} +nightly build --features bot_filtering
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /etc/phixiv/phixiv-beta
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /usr/local/bin/phixiv-beta
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S systemctl restart phixiv-beta
