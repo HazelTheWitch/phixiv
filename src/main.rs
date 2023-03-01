@@ -2,7 +2,7 @@ use std::{env, sync::Arc};
 
 use axum::Router;
 use phixiv::{
-    embed::embed_router, phixiv::phixiv_router, pixiv_redirect, proxy::proxy_router, PhixivState,
+    embed::embed_router, phixiv::phixiv_router, pixiv_redirect, proxy::proxy_router, PhixivState, CACHE_SIZE,
 };
 use tokio::sync::RwLock;
 
@@ -16,7 +16,7 @@ async fn main() {
         .with_file(true)
         .init();
 
-    let state = Arc::new(RwLock::new(PhixivState::new(64 * 1024 * 1024).await.unwrap()));
+    let state = Arc::new(RwLock::new(PhixivState::new(CACHE_SIZE).await.unwrap()));
 
     let phixiv = phixiv_router(state.clone());
     let embed = embed_router();

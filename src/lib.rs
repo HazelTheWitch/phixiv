@@ -11,7 +11,7 @@ use std::{
 use axum::{
     extract::{OriginalUri, State},
     middleware::Next,
-    response::{IntoResponse, Redirect, Response}, body::BoxBody,
+    response::{IntoResponse, Redirect, Response},
 };
 use bytes::Bytes;
 use http::{Request, StatusCode, Uri};
@@ -24,6 +24,7 @@ pub mod phixiv;
 pub mod pixiv;
 
 const TOKEN_DURATION: u64 = 3500;
+pub const CACHE_SIZE: u64 = 64 * 1024 * 1024;
 
 pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse {
     tracing::info!("Unknown uri: {} redirecting to pixiv.", uri);
