@@ -1,4 +1,4 @@
-use std::{sync::Arc, error::Error};
+use std::{sync::Arc};
 
 use axum::{
     body::StreamBody,
