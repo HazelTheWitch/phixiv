@@ -11,9 +11,11 @@ use std::{
 use axum::{
     extract::{OriginalUri, State},
     middleware::Next,
-    response::{IntoResponse, Redirect, Response},
+    response::{IntoResponse, Redirect, Response}, body::BoxBody,
 };
+use bytes::Bytes;
 use http::{Request, StatusCode, Uri};
+use moka::future::Cache;
 use pixiv::auth::{AuthError, PixivAuth};
 use reqwest::Client;
 use tokio::sync::RwLock;
@@ -41,18 +43,29 @@ pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse 
 }
 
 #[derive(Clone)]
+pub struct ImageBody {
+    pub content_type: String,
+    pub data: Bytes,
+}
+
+#[derive(Clone)]
 pub struct PhixivState {
     pub auth: PixivAuth,
     pub expires_after: Instant,
+    pub image_cache: Cache<String, ImageBody>,
     client: Client,
 }
 
 impl PhixivState {
-    pub async fn new() -> Result<Self, AuthError> {
+    pub async fn new(max_bytes: u64) -> Result<Self, AuthError> {
         let client = Client::new();
         Ok(Self {
             auth: PixivAuth::login(&client, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?,
             expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION),
+            image_cache: Cache::builder()
+                .max_capacity(max_bytes)
+                .weigher(|_, image: &ImageBody| image.data.len() as u32)
+                .build(),
             client,
         })
     }

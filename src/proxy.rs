@@ -6,12 +6,12 @@ use axum::{
     middleware,
     response::IntoResponse,
     routing::get,
-    Router,
+    Router, headers::ContentType,
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use tokio::sync::RwLock;
 
-use crate::{auth_middleware, handle_error, PhixivState};
+use crate::{auth_middleware, handle_error, PhixivState, ImageBody};
 
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
@@ -20,6 +20,13 @@ pub async fn proxy_handler(
     let pximg_url = format!("https://i.pximg.net/{path}");
 
     let state = state.read().await;
+
+    let cache = state.image_cache.clone();
+
+    if let Some(image_body) = cache.get(&path) {
+        tracing::info!("Using cached image for: {path}");
+        return Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
+    }
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
 
@@ -46,11 +53,24 @@ pub async fn proxy_handler(
         .await
         .map_err(|e| handle_error(e.into()))?;
 
-    let stream = image_response.bytes_stream();
+    match image_response.headers().get("Content-Type") {
+        Some(content_type) => {
+            let content_type = content_type.to_str().map_err(|e| handle_error(e.into()))?.to_string();
+            let bytes = image_response.bytes().await.map_err(|e| handle_error(e.into()))?;
 
-    let body = StreamBody::new(stream);
+            let image_body = ImageBody {
+                content_type,
+                data: bytes,
+            };
 
-    Ok(body)
+            cache.insert(path, image_body.clone());
+
+            Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
+        },
+        None => {
+            Ok(StreamBody::new(image_response.bytes_stream()).into_response())
+        },
+    }
 }
 
 pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {
