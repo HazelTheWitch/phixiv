@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.69"
 askama = { git = "https://github.com/djc/askama.git", rev = "32f0799" }
 axum = { version = "0.6", features = ["original-uri", "headers"] }
 bytes = "1.4.0"
@@ -27,4 +26,3 @@ urlencoding = "2.1.2"
 [features]
 small_images = []
 bot_filtering = []
-debug_logs = []

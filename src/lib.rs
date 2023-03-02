@@ -5,7 +5,7 @@ pub mod proxy;
 use std::{
     env,
     sync::Arc,
-    time::{Duration, Instant},
+    time::{Duration, Instant}, error::Error,
 };
 
 use axum::{
@@ -108,6 +108,6 @@ pub async fn auth_middleware<B>(
     Ok(next.run(request).await)
 }
 
-pub fn handle_error(err: anyhow::Error) -> (StatusCode, String) {
+pub fn handle_error(err: Box<dyn Error>) -> (StatusCode, String) {
     (StatusCode::INTERNAL_SERVER_ERROR, format!("{err}"))
 }
