@@ -1,4 +1,4 @@
-use axum::{extract::Query, routing::get, Json, Router};
+use axum::{extract::Query, Json};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use urlencoding::encode;
@@ -53,8 +53,4 @@ pub async fn embed_handler(
             String::from("https://www.pixiv.net/"),
         ))
     }
-}
-
-pub fn embed_router() -> Router {
-    Router::new().route("/", get(embed_handler))
 }
