@@ -52,6 +52,12 @@ pub struct ImageBody {
     pub data: Bytes,
 }
 
+impl IntoResponse for ImageBody {
+    fn into_response(self) -> Response {
+        ([("Content-Type", self.content_type)], self.data).into_response()
+    }
+}
+
 #[derive(Clone)]
 pub struct PhixivState {
     pub auth: PixivAuth,

@@ -28,7 +28,7 @@ pub async fn proxy_handler(
     if let Some(image_body) = cache.get(&path) {
         tracing::info!("Retrieving cached image");
 
-        return Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
+        return Ok(image_body.into_response())
     }
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
@@ -70,7 +70,7 @@ pub async fn proxy_handler(
 
             cache.insert(path, image_body.clone()).await;
 
-            Ok(([("Content-Type", image_body.content_type)], image_body.data).into_response())
+            Ok(image_body.into_response())
         },
         None => {
             tracing::info!("Could not cache, defaulting to forwarding.");
