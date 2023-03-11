@@ -4,8 +4,9 @@ pub mod embed;
 pub mod proxy;
 use std::{
     env,
+    error::Error,
     sync::Arc,
-    time::{Duration, Instant}, error::Error,
+    time::{Duration, Instant},
 };
 
 use axum::{

@@ -13,12 +13,12 @@ use axum::response::{IntoResponse, Redirect};
 
 use http::{Request, StatusCode};
 use tokio::sync::RwLock;
-use tracing::{instrument, info};
+use tracing::{info, instrument};
 
 use crate::{
     auth_middleware, handle_error,
     pixiv::artwork::{Artwork, ArtworkPath},
-    pixiv_redirect, PhixivState,
+    pixiv_redirect, PhixivState, proxy::fetch_image,
 };
 
 #[instrument(skip(state))]
@@ -33,6 +33,8 @@ pub async fn artwork_handler(
         .map_err(|e| handle_error(e.into()))?;
 
     info!("Parsed artwork");
+
+    let _ = fetch_image(artwork.image_proxy_path.clone(), state.auth.access_token.clone(), state.image_cache.clone());
 
     Ok(Html(
         artwork

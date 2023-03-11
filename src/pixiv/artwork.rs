@@ -1,7 +1,7 @@
 use std::{collections::HashMap, env, string::FromUtf8Error};
 
 use askama::Template;
-use http::{HeaderMap, HeaderValue};
+use http::{HeaderMap, HeaderValue, Uri};
 use minify_html::{minify, Cfg};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -37,6 +37,7 @@ pub struct ArtworkPath {
 #[template(path = "artwork.html")]
 pub struct Artwork {
     pub image_proxy_url: String,
+    pub image_proxy_path: String,
     pub title: String,
     pub description: String,
     pub author_name: String,
@@ -133,10 +134,7 @@ impl Artwork {
             .map(|tag| {
                 if let Some(language) = &path.language {
                     if let Some(translation) = tag.translation {
-                        translation
-                            .get(language)
-                            .unwrap_or(&tag.tag)
-                            .to_string()
+                        translation.get(language).unwrap_or(&tag.tag).to_string()
                     } else {
                         tag.tag
                     }
@@ -160,6 +158,14 @@ impl Artwork {
             }
         })?;
 
+        let image_proxy_path = image_proxy_url
+            .parse::<Uri>()
+            .unwrap()
+            .path_and_query()
+            .map(|pq| pq.as_str())
+            .unwrap_or("")
+            .to_owned();
+
         let description = if body.description.is_empty() {
             tag_string.clone()
         } else {
@@ -168,11 +174,16 @@ impl Artwork {
 
         Ok(Self {
             image_proxy_url,
+            image_proxy_path,
             title: body.title,
             description,
             url: body.extra_data.meta.canonical,
             alt_text: tag_string,
-            author_name: if ai { String::from("AI Generated") } else { body.author_name },
+            author_name: if ai {
+                String::from("AI Generated")
+            } else {
+                body.author_name
+            },
             author_id: if ai { None } else { Some(body.author_id) },
             host: env::var("HOST").unwrap(),
         })

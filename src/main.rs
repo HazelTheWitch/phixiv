@@ -1,8 +1,9 @@
 use std::{env, sync::Arc};
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use phixiv::{
-    embed::embed_handler, phixiv::phixiv_router, pixiv_redirect, proxy::proxy_router, PhixivState, CACHE_SIZE,
+    embed::embed_handler, phixiv::phixiv_router, pixiv_redirect, proxy::proxy_router, PhixivState,
+    CACHE_SIZE,
 };
 use tokio::sync::RwLock;
 
@@ -12,9 +13,7 @@ use tower_http::normalize_path::NormalizePathLayer;
 async fn main() {
     dotenvy::dotenv().ok();
 
-    tracing_subscriber::fmt::fmt()
-        .with_file(true)
-        .init();
+    tracing_subscriber::fmt::fmt().with_file(true).init();
 
     let state = Arc::new(RwLock::new(PhixivState::new(CACHE_SIZE).await.unwrap()));
 
