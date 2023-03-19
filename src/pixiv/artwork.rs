@@ -34,6 +34,15 @@ pub struct ArtworkPath {
     pub image_index: Option<usize>,
 }
 
+impl ArtworkPath {
+    pub fn format_path(&self) -> String {
+        match &self.language {
+            Some(lang) => format!("/{lang}/artworks/{}", self.id),
+            None => format!("/artworks/{}", self.id),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Template)]
 #[template(path = "artwork.html")]
 pub struct Artwork {
