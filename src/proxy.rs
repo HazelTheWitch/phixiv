@@ -23,7 +23,7 @@ pub enum ProxyError {
     NoContentType,
 }
 
-#[instrument(skip(cache, access_token))]
+#[instrument(skip(cache, path, access_token))]
 pub async fn fetch_image(
     path: String,
     access_token: String,
