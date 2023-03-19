@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{Path, State},
+    extract::{State, Path},
     response::{Html, Response, IntoResponse},
     routing::get,
     Router, headers::UserAgent, TypedHeader,
@@ -16,13 +16,13 @@ use tracing::{info, instrument};
 
 use crate::{
     handle_error,
-    pixiv::artwork::{Artwork, ArtworkPath},
+    pixiv::artwork::{Artwork, RawArtworkPath},
     pixiv_redirect, PhixivState, proxy::fetch_image,
 };
 
 #[instrument(skip(state))]
 pub async fn artwork_handler(
-    Path(path): Path<ArtworkPath>,
+    Path(path): Path<RawArtworkPath>,
     State(state): State<Arc<RwLock<PhixivState>>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
 ) -> Result<Response, (StatusCode, String)> {
@@ -36,6 +36,8 @@ pub async fn artwork_handler(
             return Ok(Redirect::temporary(&format!("http://www.pixiv.net{}", path.format_path())).into_response());
         }
     }
+
+    let path = path.parse();
 
     let state = state.read().await;
 

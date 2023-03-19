@@ -28,6 +28,26 @@ pub enum ArtworkError {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct RawArtworkPath {
+    pub language: Option<String>,
+    pub id: String,
+    pub image_index: Option<String>,
+}
+
+impl RawArtworkPath {
+    pub fn parse(self) -> ArtworkPath {
+        let Some(image_index) = &self.image_index else {
+            return ArtworkPath { language: self.language, id: self.id, image_index: None };
+        };
+
+        match image_index.parse::<usize>() {
+            Ok(image_index) => ArtworkPath { language: self.language, id: self.id, image_index: Some(image_index) },
+            Err(_) => ArtworkPath { language: self.language, id: self.id, image_index: None },
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
 pub struct ArtworkPath {
     pub language: Option<String>,
     pub id: String,
