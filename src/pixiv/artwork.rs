@@ -31,6 +31,7 @@ pub enum ArtworkError {
 pub struct ArtworkPath {
     pub language: Option<String>,
     pub id: String,
+    pub image_index: Option<usize>,
 }
 
 #[derive(Debug, Serialize, Template)]
@@ -151,9 +152,12 @@ impl Artwork {
         let image_proxy_url = Artwork::image_proxy_url(&{
             match app_response.illust.meta_single_page.original_image_url {
                 Some(url) => url,
-                None => match app_response.illust.meta_pages.get(0) {
-                    Some(meta_page) => meta_page.image_urls.original.clone(),
-                    None => app_response.illust.image_urls.large.clone(),
+                None => {
+                    let pages = app_response.illust.meta_pages;
+                    match pages.get(path.image_index.unwrap_or(1).min(pages.len()).saturating_sub(1)) {
+                        Some(meta_page) => meta_page.image_urls.original.clone(),
+                        None => app_response.illust.image_urls.large.clone(),
+                    }
                 },
             }
         })?;
