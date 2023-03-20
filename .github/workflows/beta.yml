@@ -8,10 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - run: |
-        rustup set auto-self-update disable
-        rustup toolchain install nightly --profile minimal
     - name: Deploy
       uses: appleboy/ssh-action@v0.1.7
       with:
