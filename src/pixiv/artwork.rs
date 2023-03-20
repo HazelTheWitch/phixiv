@@ -95,7 +95,7 @@ impl Artwork {
     pub fn image_proxy_url(url: &str) -> Result<(String, String), ArtworkError> {
         let url = url::Url::parse(url)?;
 
-        Ok((format!("{}/i{}", env::var("HOST").unwrap(), url.path()), url.path().to_owned()))
+        Ok((format!("{}/i{}", env::var("HOST").unwrap(), url.path()), url.path().split_at(1).1.to_owned()))
     }
 
     #[instrument(skip(client, access_token))]
