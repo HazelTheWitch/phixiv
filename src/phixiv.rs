@@ -49,26 +49,28 @@ pub async fn artwork_handler(
 
     {
         let path = artwork.image_proxy_path.clone();
-        let immediate = state.immediate_cache.clone();
-        let access_token = state.auth.access_token.clone();
+        if !state.image_cache.contains_key(&path) {
+            let immediate = state.immediate_cache.clone();
+            let access_token = state.auth.access_token.clone();
 
-        let image = Arc::new(Mutex::new(None));
-        if !immediate.contains_key(&path) {
-            immediate.insert(path.clone(), image.clone()).await;
-            tracing::info!("Inserted dummy image");
+            let image = Arc::new(Mutex::new(None));
+            if !immediate.contains_key(&path) {
+                immediate.insert(path.clone(), image.clone()).await;
+                tracing::info!("Inserted dummy image");
 
-            tokio::spawn(async move {
-                let mut image = image.lock().await;
-    
-                let Ok(image_body) = fetch_image(&path, &access_token).await else {
-                    immediate.invalidate(&path).await;
-                    return;
-                };
-    
-                *image = Some(image_body);
-    
-                tracing::info!("Inserted real image into immediage cache");
-            });
+                tokio::spawn(async move {
+                    let mut image = image.lock().await;
+        
+                    let Ok(image_body) = fetch_image(&path, &access_token).await else {
+                        immediate.invalidate(&path).await;
+                        return;
+                    };
+        
+                    *image = Some(image_body);
+        
+                    tracing::info!("Inserted real image into immediage cache");
+                });
+            }
         }
     }
 
