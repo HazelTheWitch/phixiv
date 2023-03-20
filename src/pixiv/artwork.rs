@@ -1,7 +1,7 @@
 use std::{collections::HashMap, env, string::FromUtf8Error};
 
 use askama::Template;
-use http::{HeaderMap, HeaderValue, Uri};
+use http::{HeaderMap, HeaderValue};
 use minify_html::{minify, Cfg};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -92,10 +92,10 @@ impl Artwork {
         Ok(String::from_utf8(minified)?)
     }
 
-    pub fn image_proxy_url(url: &str) -> Result<String, ArtworkError> {
+    pub fn image_proxy_url(url: &str) -> Result<(String, String), ArtworkError> {
         let url = url::Url::parse(url)?;
 
-        Ok(format!("{}/i{}", env::var("HOST").unwrap(), url.path()))
+        Ok((format!("{}/i{}", env::var("HOST").unwrap(), url.path()), url.path().to_owned()))
     }
 
     #[instrument(skip(client, access_token))]
@@ -176,9 +176,9 @@ impl Artwork {
             .collect::<String>();
 
         #[cfg(feature = "small_images")]
-        let image_proxy_url = Artwork::image_proxy_url(&app_response.illust.image_urls.large)?;
+        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&app_response.illust.image_urls.large)?;
         #[cfg(not(feature = "small_images"))]
-        let image_proxy_url = Artwork::image_proxy_url(&{
+        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&{
             match app_response.illust.meta_single_page.original_image_url {
                 Some(url) => url,
                 None => {
@@ -190,14 +190,6 @@ impl Artwork {
                 },
             }
         })?;
-
-        let image_proxy_path = image_proxy_url
-            .parse::<Uri>()
-            .unwrap()
-            .path_and_query()
-            .map(|pq| pq.as_str())
-            .unwrap_or("")
-            .to_owned();
 
         let description = if body.description.is_empty() {
             tag_string.clone()
