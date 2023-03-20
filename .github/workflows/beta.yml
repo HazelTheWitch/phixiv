@@ -18,6 +18,6 @@ jobs:
           cd ${{ secrets.REPOSITORY_DIRECTORY }}
           git checkout beta
           git pull
-          ${{ secrets.CARGO_PATH }} +nightly -Z sparse-registry build --release
+          ${{ secrets.CARGO_PATH }} build --release
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /usr/local/bin/phixiv-beta
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S systemctl restart phixiv-beta
