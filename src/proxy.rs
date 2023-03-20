@@ -10,7 +10,7 @@ use axum::{
 use http::{HeaderMap, HeaderValue, StatusCode};
 use moka::future::Cache;
 use thiserror::Error;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Mutex};
 use tracing::instrument;
 
 use crate::{auth_middleware, handle_error, ImageBody, PhixivState};
@@ -23,19 +23,12 @@ pub enum ProxyError {
     NoContentType,
 }
 
-#[instrument(skip(cache, path, access_token))]
+#[instrument(skip_all)]
 pub async fn fetch_image(
-    path: String,
-    access_token: String,
-    cache: Cache<String, ImageBody>,
+    path: &String,
+    access_token: &String,
 ) -> Result<ImageBody, ProxyError> {
     let pximg_url = format!("https://i.pximg.net/{path}");
-
-    if let Some(image_body) = cache.get(&path) {
-        tracing::info!("Retrieving cached image");
-
-        return Ok(image_body);
-    }
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
 
@@ -67,14 +60,49 @@ pub async fn fetch_image(
                 data: bytes,
             };
 
-            tracing::info!("Caching image");
-
-            cache.insert(path, image_body.clone()).await;
-
             Ok(image_body)
         }
         None => Err(ProxyError::NoContentType),
     }
+}
+
+#[instrument(skip_all)]
+pub async fn fetch_or_get_cached_image(
+    path: String,
+    access_token: &String,
+    cache: Cache<String, Arc<ImageBody>>,
+    immediate_cache: Cache<String, Arc<Mutex<Option<ImageBody>>>>,
+) -> Result<Arc<ImageBody>, ProxyError> {
+    if let Some(image) = immediate_cache.get(&path) {
+        tracing::info!("Image in immediate cache");
+
+        match image.lock().await.take() {
+            Some(image_body) => {
+                tracing::info!("Image found and cached");
+                let image_body = Arc::new(image_body);
+
+                cache.insert(path, image_body.clone()).await;
+
+                return Ok(image_body);
+            },
+            None => {
+                tracing::info!("Image already used");
+                immediate_cache.invalidate(&path).await
+            },
+        }
+    }
+
+    if let Some(image_body) = cache.get(&path) {
+        tracing::info!("Retrieving cached image");
+        return Ok(image_body);
+    }
+
+    tracing::info!("Fetching Image");
+    let image_body = Arc::new(fetch_image(&path, access_token).await?);
+
+    cache.insert(path, image_body.clone()).await;
+
+    Ok(image_body)
 }
 
 #[instrument(skip(state))]
@@ -85,11 +113,14 @@ pub async fn proxy_handler(
     let state = state.read().await;
 
     let cache = state.image_cache.clone();
+    let immediate_cache = state.immediate_cache.clone();
 
-    Ok(fetch_image(path, state.auth.access_token.clone(), cache)
-        .await
-        .map_err(|e| handle_error(e.into()))?
-        .into_response())
+    Ok(
+        fetch_or_get_cached_image(path, &state.auth.access_token, cache, immediate_cache)
+            .await
+            .map_err(|e| handle_error(e.into()))?
+            .into_response()
+    )
 }
 
 pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {

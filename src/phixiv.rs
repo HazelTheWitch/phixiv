@@ -11,7 +11,7 @@ use axum::{
 use axum::response::Redirect;
 
 use http::StatusCode;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Mutex};
 use tracing::{info, instrument};
 
 use crate::{
@@ -47,7 +47,27 @@ pub async fn artwork_handler(
 
     info!("Parsed artwork");
 
-    let _ = fetch_image(artwork.image_proxy_path.clone(), state.auth.access_token.clone(), state.image_cache.clone());
+    {
+        let path = artwork.image_proxy_path.clone();
+        let immediate = state.immediate_cache.clone();
+        let access_token = state.auth.access_token.clone();
+        tokio::spawn(async move {
+            let image = Arc::new(Mutex::new(None));
+
+            if !immediate.contains_key(&path) {
+                immediate.insert(path.clone(), image.clone()).await;
+            }
+
+            let mut image = image.lock().await;
+
+            let Ok(image_body) = fetch_image(&path, &access_token).await else {
+                immediate.invalidate(&path).await;
+                return;
+            };
+
+            *image = Some(image_body);
+        });
+    }
 
     Ok(Html(
         artwork

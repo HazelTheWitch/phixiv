@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use http::{HeaderMap, HeaderValue, StatusCode};
 use reqwest::Client;
@@ -20,8 +20,8 @@ pub enum AuthError {
 
 #[derive(Clone)]
 pub struct PixivAuth {
-    pub access_token: String,
-    pub refresh_token: String,
+    pub access_token: Arc<String>,
+    pub refresh_token: Arc<String>,
 }
 
 impl PixivAuth {
@@ -62,8 +62,8 @@ impl PixivAuth {
         let response_payload: AuthPayload = auth_response.json().await?;
 
         Ok(Self {
-            access_token: response_payload.response.access_token,
-            refresh_token: response_payload.response.refresh_token,
+            access_token: Arc::new(response_payload.response.access_token),
+            refresh_token: Arc::new(response_payload.response.refresh_token),
         })
     }
 }

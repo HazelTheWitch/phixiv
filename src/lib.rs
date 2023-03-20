@@ -19,7 +19,7 @@ use http::{Request, StatusCode, Uri};
 use moka::future::Cache;
 use pixiv::auth::{AuthError, PixivAuth};
 use reqwest::Client;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Mutex};
 use tracing::instrument;
 
 pub mod phixiv;
@@ -53,9 +53,9 @@ pub struct ImageBody {
     pub data: Bytes,
 }
 
-impl IntoResponse for ImageBody {
-    fn into_response(self) -> Response {
-        ([("Content-Type", self.content_type)], self.data).into_response()
+impl ImageBody {
+    pub fn into_response(&self) -> Response {
+        ([("Content-Type", self.content_type.clone())], self.data.clone()).into_response()
     }
 }
 
@@ -63,7 +63,8 @@ impl IntoResponse for ImageBody {
 pub struct PhixivState {
     pub auth: PixivAuth,
     pub expires_after: Instant,
-    pub image_cache: Cache<String, ImageBody>,
+    pub image_cache: Cache<String, Arc<ImageBody>>,
+    pub immediate_cache: Cache<String, Arc<Mutex<Option<ImageBody>>>>,
     client: Client,
 }
 
@@ -75,7 +76,11 @@ impl PhixivState {
             expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION),
             image_cache: Cache::builder()
                 .max_capacity(max_bytes)
-                .weigher(|_, image: &ImageBody| image.data.len() as u32)
+                .weigher(|_: &String, image: &Arc<ImageBody>| image.data.len() as u32)
+                .build(),
+            immediate_cache: Cache::builder()
+                .max_capacity(1)
+                .weigher(|_, _| 0)
                 .build(),
             client,
         })
