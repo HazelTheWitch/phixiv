@@ -73,6 +73,13 @@ pub async fn fetch_or_get_cached_image(
     cache: Cache<String, Arc<ImageBody>>,
     immediate_cache: Cache<String, Arc<Mutex<Option<ImageBody>>>>,
 ) -> Result<Arc<ImageBody>, ProxyError> {
+    let keys: Vec<String> = immediate_cache
+        .iter()
+        .map(|(k, _)| k.as_str().to_owned())
+        .collect();
+
+    println!("{path} {keys:?}");
+
     if let Some(image) = immediate_cache.get(&path) {
         tracing::info!("Image in immediate cache");
 
