@@ -78,7 +78,10 @@ impl PhixivState {
                 .max_capacity(max_bytes)
                 .weigher(|_: &String, image: &Arc<ImageBody>| image.data.len() as u32)
                 .build(),
-            immediate_cache: Cache::new(256),
+            immediate_cache: Cache::builder()
+                .max_capacity(256)
+                .time_to_live(Duration::from_secs(300))
+                .build(),
             client,
         })
     }
