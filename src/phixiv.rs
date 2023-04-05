@@ -2,20 +2,15 @@ use std::sync::Arc;
 
 use axum::{
     extract::{State, Path},
-    response::{Html, Response, IntoResponse},
+    response::{Html, Response, IntoResponse, Redirect},
     routing::get,
     Router, headers::UserAgent, TypedHeader,
 };
 
-#[cfg(feature = "bot_filtering")]
-use axum::response::Redirect;
-
-use http::StatusCode;
 use tokio::sync::{RwLock, Mutex};
 use tracing::{info, instrument};
 
 use crate::{
-    handle_error,
     pixiv::artwork::{Artwork, RawArtworkPath},
     pixiv_redirect, PhixivState, proxy::fetch_image,
 };
@@ -25,7 +20,11 @@ pub async fn artwork_handler(
     Path(path): Path<RawArtworkPath>,
     State(state): State<Arc<RwLock<PhixivState>>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
-) -> Result<Response, (StatusCode, String)> {
+) -> Result<Response, Response> {
+    let path = path.parse();
+
+    let redirect = Redirect::temporary(&format!("http://www.pixiv.net{}", path.format_path()));
+
     #[cfg(feature = "bot_filtering")]
     {
         let bots = isbot::Bots::default();
@@ -33,17 +32,20 @@ pub async fn artwork_handler(
         if !bots.is_bot(user_agent.as_str()) {
             tracing::info!("Non-bot request, redirecting to pixiv.");
 
-            return Ok(Redirect::temporary(&format!("http://www.pixiv.net{}", path.format_path())).into_response());
+            return Ok(redirect.into_response());
         }
     }
 
-    let path = path.parse();
-
     let state = state.read().await;
 
-    let artwork = Artwork::from_path(path, &state.auth.access_token)
-        .await
-        .map_err(|e| handle_error(e.into()))?;
+    let artwork = match Artwork::from_path(path, &state.auth.access_token)
+        .await {
+            Ok(artwork) => artwork,
+            Err(e) => {
+                tracing::error!("{e}");
+                return Err(redirect.into_response());
+            },
+    };
 
     info!("Parsed artwork");
 
@@ -75,9 +77,13 @@ pub async fn artwork_handler(
     }
 
     Ok(Html(
-        artwork
-            .render_minified()
-            .map_err(|e| handle_error(e.into()))?,
+        match artwork.render_minified() {
+            Ok(html) => html,
+            Err(e) => {
+                tracing::error!("{e}");
+                return Err(redirect.into_response());
+            }
+        }
     ).into_response())
 }
 
