@@ -1,4 +1,4 @@
-FROM rust:1.68.0 as builder
+FROM rust:1.68 as builder
 
 ARG FEATURES=bot_filtering
 
@@ -7,6 +7,7 @@ WORKDIR /phixiv
 
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
+COPY ./templates ./templates
 
 RUN cargo build --release --features ${FEATURES}
 
