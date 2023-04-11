@@ -142,7 +142,7 @@ impl Artwork {
     }
 
     #[instrument(skip(access_token))]
-    pub async fn from_path(path: ArtworkPath, access_token: &str) -> Result<Self, PixivError> {
+    pub async fn from_path(path: &ArtworkPath, access_token: &str) -> Result<Self, PixivError> {
         let client = Client::new();
 
         let (app, ajax) = tokio::join!(

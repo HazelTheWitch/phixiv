@@ -38,7 +38,7 @@ pub async fn artwork_handler(
 
     let state = state.read().await;
 
-    let artwork = match Artwork::from_path(path, &state.auth.access_token)
+    let artwork = match Artwork::from_path(&path, &state.auth.access_token)
         .await {
             Ok(artwork) => artwork,
             Err(e) => {
@@ -47,7 +47,7 @@ pub async fn artwork_handler(
             },
     };
 
-    info!("Parsed artwork");
+    info!("Parsed artwork: {}", path.id);
 
     {
         let path = artwork.image_proxy_path.clone();
@@ -70,7 +70,7 @@ pub async fn artwork_handler(
         
                     *image = Some(image_body);
         
-                    tracing::info!("Inserted real image into immediage cache");
+                    tracing::info!("Inserted real image into immediate cache");
                 });
             }
         }
