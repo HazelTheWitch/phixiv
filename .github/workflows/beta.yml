@@ -30,4 +30,4 @@ jobs:
         path: .
         push: true
         tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.output.labels }}
+        labels: ${{ steps.meta.outputs.labels }}
