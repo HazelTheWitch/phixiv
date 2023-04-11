@@ -8,16 +8,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Deploy
-      uses: appleboy/ssh-action@v0.1.7
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Log In to Container Registry
+      uses: docker/login-action@v1
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
-        script: |
-          cd ${{ secrets.REPOSITORY_DIRECTORY }}
-          git checkout beta
-          git pull
-          ${{ secrets.CARGO_PATH }} build --release
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S mv ./target/release/phixiv /usr/local/bin/phixiv-beta
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S systemctl restart phixiv-beta
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract Metadata for Docker
+      id: meta
+      uses: docker/metadata-action@v1
+      with:
+        images: ghcr.io/phixiv-beta
+
+    - name: Build + Push Docker Image
+      uses: docker/build-push-action@v1
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.output.labels }}
