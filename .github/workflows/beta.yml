@@ -22,7 +22,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v4
       with:
-        images: ghcr.io/phixiv-beta
+        images: ghcr.io/${{ github.actor }}/phixiv-beta
 
     - name: Build + Push Docker Image
       uses: docker/build-push-action@v4
@@ -31,4 +31,3 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        build-args: FEATURES=
