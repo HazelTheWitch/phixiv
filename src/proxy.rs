@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     extract::{Path, State},
     middleware,
     response::IntoResponse,
     routing::get,
-    Router,
+    Router, headers::CacheControl, TypedHeader,
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use moka::future::Cache;
@@ -118,10 +118,13 @@ pub async fn proxy_handler(
     let immediate_cache = state.immediate_cache.clone();
 
     Ok(
-        fetch_or_get_cached_image(path, &state.auth.access_token, cache, immediate_cache)
-            .await
-            .map_err(|e| handle_error(e.into()))?
-            .into_response()
+        (
+            TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24))),
+            fetch_or_get_cached_image(path, &state.auth.access_token, cache, immediate_cache)
+                .await
+                .map_err(|e| handle_error(e.into()))?
+                .into_response()
+        )
     )
 }
 
