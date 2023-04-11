@@ -157,6 +157,10 @@ impl Artwork {
 
         let ai = app_response.illust.illust_ai_type == 2;
 
+        if ai {
+            tracing::info!("Ai Generated: {}", path.id);
+        }
+
         let tag_string = body
             .tags
             .tags
