@@ -1,4 +1,4 @@
-FROM rust:1.68 as builder
+FROM rustlang/rust:nightly as builder
 
 ARG FEATURES=bot_filtering
 
