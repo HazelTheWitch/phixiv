@@ -1,9 +1,13 @@
 FROM rustlang/rust:nightly as builder
 
-RUN mkdir phixiv
+RUN cargo new --bin phixiv
+
 WORKDIR /phixiv
 
 COPY ./Cargo.toml ./Cargo.toml
+
+RUN rm -rf ./src
+
 COPY ./src ./src
 COPY ./templates ./templates
 
