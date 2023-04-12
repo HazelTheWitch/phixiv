@@ -6,6 +6,8 @@ WORKDIR /phixiv
 
 COPY ./Cargo.toml ./Cargo.toml
 
+RUN cargo build --release
+
 RUN rm -rf ./src
 
 COPY ./src ./src
