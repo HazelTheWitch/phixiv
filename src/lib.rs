@@ -17,8 +17,9 @@ use axum::{
 use bytes::Bytes;
 use http::{Request, StatusCode, Uri};
 use moka::future::Cache;
-use pixiv::auth::{AuthError, PixivAuth};
+use pixiv::{auth::{AuthError, PixivAuth}, artwork::ArtworkPath};
 use reqwest::Client;
+use serde::Deserialize;
 use tokio::sync::{RwLock, Mutex};
 use tracing::instrument;
 
@@ -59,12 +60,31 @@ impl ImageBody {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Deserialize)]
+pub struct ImageKey {
+    pub id: String,
+    pub image_index: Option<usize>,
+}
+
+impl From<ArtworkPath> for ImageKey {
+    fn from(path: ArtworkPath) -> Self {
+        Self { id: path.id, image_index: path.image_index }
+    }
+}
+
+impl From<ImageKey> for ArtworkPath {
+    fn from(key: ImageKey) -> Self {
+        Self { language: None, id: key.id, image_index: key.image_index }
+    }
+}
+
 #[derive(Clone)]
 pub struct PhixivState {
     pub auth: PixivAuth,
     pub expires_after: Instant,
     pub image_cache: Cache<String, Arc<ImageBody>>,
     pub immediate_cache: Cache<String, Arc<Mutex<Option<ImageBody>>>>,
+    pub proxy_url_cache: Cache<ImageKey, String>,
     client: Client,
 }
 
@@ -82,6 +102,7 @@ impl PhixivState {
                 .max_capacity(256)
                 .time_to_live(Duration::from_secs(300))
                 .build(),
+            proxy_url_cache: Cache::new(4096),
             client,
         })
     }

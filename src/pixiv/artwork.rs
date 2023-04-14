@@ -63,6 +63,11 @@ impl ArtworkPath {
     }
 }
 
+pub struct ImageUrl {
+    pub image_proxy_url: String,
+    pub image_proxy_path: String,
+}
+
 #[derive(Debug, Serialize, Template)]
 #[template(path = "artwork.html")]
 pub struct Artwork {
@@ -71,7 +76,7 @@ pub struct Artwork {
     pub title: String,
     pub description: String,
     pub author_name: String,
-    pub author_id: Option<String>,
+    pub author_id: String,
     pub url: String,
     pub alt_text: String,
     pub host: String,
@@ -142,24 +147,41 @@ impl Artwork {
     }
 
     #[instrument(skip(access_token))]
+    pub async fn get_image_url(client: &Client, path: &ArtworkPath, access_token: &str) -> Result<ImageUrl, PixivError> {
+        let app_response = Artwork::app_request(client, path, access_token).await?;
+
+        #[cfg(feature = "small_images")]
+        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&app_response.illust.image_urls.large)?;
+        #[cfg(not(feature = "small_images"))]
+        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&{
+            match app_response.illust.meta_single_page.original_image_url {
+                Some(url) => url,
+                None => {
+                    let pages = app_response.illust.meta_pages;
+                    match pages.get(path.image_index.unwrap_or(1).min(pages.len()).saturating_sub(1)) {
+                        Some(meta_page) => meta_page.image_urls.original.clone(),
+                        None => app_response.illust.image_urls.large.clone(),
+                    }
+                },
+            }
+        })?;
+
+        Ok(ImageUrl { image_proxy_url, image_proxy_path })
+    }
+
+    #[instrument(skip(access_token))]
     pub async fn from_path(path: &ArtworkPath, access_token: &str) -> Result<Self, PixivError> {
         let client = Client::new();
 
-        let (app, ajax) = tokio::join!(
-            Artwork::app_request(&client, &path, access_token),
+        let (image_url, ajax) = tokio::join!(
+            Artwork::get_image_url(&client, &path, access_token),
             Artwork::ajax_request(&client, &path),
         );
 
-        let app_response = app?;
+        let ImageUrl { image_proxy_url, image_proxy_path } = image_url?;
         let ajax_response = ajax?;
 
         let body = ajax_response.body;
-
-        let ai = app_response.illust.illust_ai_type == 2;
-
-        if ai {
-            tracing::info!("Ai Generated: {}", path.id);
-        }
 
         let tag_string = body
             .tags
@@ -179,22 +201,6 @@ impl Artwork {
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
 
-        #[cfg(feature = "small_images")]
-        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&app_response.illust.image_urls.large)?;
-        #[cfg(not(feature = "small_images"))]
-        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&{
-            match app_response.illust.meta_single_page.original_image_url {
-                Some(url) => url,
-                None => {
-                    let pages = app_response.illust.meta_pages;
-                    match pages.get(path.image_index.unwrap_or(1).min(pages.len()).saturating_sub(1)) {
-                        Some(meta_page) => meta_page.image_urls.original.clone(),
-                        None => app_response.illust.image_urls.large.clone(),
-                    }
-                },
-            }
-        })?;
-
         let description = if body.description.is_empty() {
             tag_string.clone()
         } else {
@@ -208,12 +214,8 @@ impl Artwork {
             description,
             url: body.extra_data.meta.canonical,
             alt_text: tag_string,
-            author_name: if ai {
-                String::from("AI Generated")
-            } else {
-                body.author_name
-            },
-            author_id: if ai { None } else { Some(body.author_id) },
+            author_name: body.author_name,
+            author_id: body.author_id,
             host: env::var("HOST").unwrap(),
         })
     }

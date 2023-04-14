@@ -12,12 +12,7 @@
     <meta content="{{ alt_text }}" property="og:image:alt" />
     <meta content="summary_large_image" name="twitter:card" />
     <meta http-equiv="Refresh" content="0; url='{{ url }}'" />
-    {% match author_id %}
-        {% when Some with (author) %}
-            <link rel="alternate" type="application/json+oembed" href="{{ host }}/e?i={{ author }}&n={{ author_name }}">
-        {% when None %}
-            <link rel="alternate" type="application/json+oembed" href="{{ host }}/e?n={{ author_name }}">
-    {% endmatch %}
+    <link rel="alternate" type="application/json+oembed" href="{{ host }}/e?i={{ author_id }}&n={{ author_name }}">
 </head>
 <body>
     <a href="{{ url }}">You should have been redirected, here is a link to the original post.</a>

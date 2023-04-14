@@ -3,17 +3,18 @@ use std::{sync::Arc, time::Duration};
 use axum::{
     extract::{Path, State},
     middleware,
-    response::IntoResponse,
+    response::{IntoResponse, Redirect},
     routing::get,
     Router, headers::CacheControl, TypedHeader,
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use moka::future::Cache;
+use reqwest::Client;
 use thiserror::Error;
 use tokio::sync::{RwLock, Mutex};
 use tracing::instrument;
 
-use crate::{auth_middleware, handle_error, ImageBody, PhixivState};
+use crate::{auth_middleware, handle_error, ImageBody, PhixivState, ImageKey, pixiv::artwork::{Artwork, ImageUrl}};
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
@@ -128,8 +129,26 @@ pub async fn proxy_handler(
     )
 }
 
+pub async fn direct_image_handler(
+    Path(image_key): Path<ImageKey>,
+    State(state): State<Arc<RwLock<PhixivState>>>,
+) -> Result<Redirect, (StatusCode, String)> {
+    let state = state.read().await;
+
+    if let Some(url) = state.proxy_url_cache.get(&image_key) {
+        tracing::info!("Cached ImageKey {:?} -> {}", image_key, url);
+        return Ok(Redirect::permanent(&url));
+    }
+
+    let ImageUrl { image_proxy_path: _, image_proxy_url } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token).await.map_err(|e| handle_error(e.into()))?;
+
+    Ok(Redirect::permanent(&image_proxy_url))
+}
+
 pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {
     Router::new()
+        .route("/:id", get(direct_image_handler))
+        .route("/:id/:image_index", get(direct_image_handler))
         .route("/*path", get(proxy_handler))
         .with_state(state.clone())
         .route_layer(middleware::from_fn_with_state(state, auth_middleware))

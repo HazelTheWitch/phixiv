@@ -50,21 +50,24 @@ pub async fn artwork_handler(
     info!("Parsed artwork: {}", path.id);
 
     {
-        let path = artwork.image_proxy_path.clone();
-        if !state.image_cache.contains_key(&path) {
+        let proxy_path = artwork.image_proxy_path.clone();
+
+        state.proxy_url_cache.insert(path.into(), artwork.image_proxy_url.clone()).await;
+
+        if !state.image_cache.contains_key(&proxy_path) {
             let immediate = state.immediate_cache.clone();
             let access_token = state.auth.access_token.clone();
 
             let image = Arc::new(Mutex::new(None));
-            if !immediate.contains_key(&path) {
-                immediate.insert(path.clone(), image.clone()).await;
+            if !immediate.contains_key(&proxy_path) {
+                immediate.insert(proxy_path.clone(), image.clone()).await;
                 tracing::info!("Inserted dummy image");
 
                 tokio::spawn(async move {
                     let mut image = image.lock().await;
         
-                    let Ok(image_body) = fetch_image(&path, &access_token).await else {
-                        immediate.invalidate(&path).await;
+                    let Ok(image_body) = fetch_image(&proxy_path, &access_token).await else {
+                        immediate.invalidate(&proxy_path).await;
                         return;
                     };
         
