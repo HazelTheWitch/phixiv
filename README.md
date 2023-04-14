@@ -20,3 +20,10 @@ The following are the valid paths for artworks, if there is a format which isn't
 /artworks/:id/:index
 /:language/artworks/:id/:index
 ```
+
+In addition, direct image links are in these forms.
+
+```text
+/d/:id
+/d/:id/:index
+```
