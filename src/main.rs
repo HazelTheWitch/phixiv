@@ -2,7 +2,7 @@ use std::{env, sync::Arc};
 
 use axum::{routing::get, Router};
 use phixiv::{
-    embed::embed_handler, phixiv::phixiv_router, pixiv_redirect, proxy::proxy_router, PhixivState,
+    embed::embed_handler, phixiv::phixiv_router, pixiv_redirect, proxy::{proxy_router, direct_router}, PhixivState,
     CACHE_SIZE,
 };
 use tokio::sync::RwLock;
@@ -19,11 +19,13 @@ async fn main() {
 
     let phixiv = phixiv_router(state.clone());
     let proxy = proxy_router(state.clone());
+    let direct = direct_router(state.clone());
 
     let app = Router::new()
         .merge(phixiv)
         .route("/e", get(embed_handler))
         .nest("/i", proxy)
+        .nest("/d", direct)
         .fallback(pixiv_redirect)
         .layer(NormalizePathLayer::trim_trailing_slash());
 

@@ -145,10 +145,16 @@ pub async fn direct_image_handler(
     Ok(Redirect::permanent(&image_proxy_url))
 }
 
-pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {
+pub fn direct_router(state: Arc<RwLock<PhixivState>>) -> Router {
     Router::new()
         .route("/:id", get(direct_image_handler))
         .route("/:id/:image_index", get(direct_image_handler))
+        .with_state(state.clone())
+        .route_layer(middleware::from_fn_with_state(state, auth_middleware))
+}
+
+pub fn proxy_router(state: Arc<RwLock<PhixivState>>) -> Router {
+    Router::new()
         .route("/*path", get(proxy_handler))
         .with_state(state.clone())
         .route_layer(middleware::from_fn_with_state(state, auth_middleware))
