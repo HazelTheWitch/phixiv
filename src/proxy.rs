@@ -2,19 +2,24 @@ use std::{sync::Arc, time::Duration};
 
 use axum::{
     extract::{Path, State},
+    headers::CacheControl,
     middleware,
     response::{IntoResponse, Redirect},
     routing::get,
-    Router, headers::CacheControl, TypedHeader,
+    Router, TypedHeader,
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use moka::future::Cache;
 use reqwest::Client;
 use thiserror::Error;
-use tokio::sync::{RwLock, Mutex};
+use tokio::sync::{Mutex, RwLock};
 use tracing::instrument;
 
-use crate::{auth_middleware, handle_error, ImageBody, PhixivState, ImageKey, pixiv::artwork::{Artwork, ImageUrl}};
+use crate::{
+    auth_middleware, handle_error,
+    pixiv::artwork::{Artwork, ImageUrl},
+    ImageBody, ImageKey, PhixivState,
+};
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
@@ -25,10 +30,7 @@ pub enum ProxyError {
 }
 
 #[instrument(skip_all)]
-pub async fn fetch_image(
-    path: &String,
-    access_token: &String,
-) -> Result<ImageBody, ProxyError> {
+pub async fn fetch_image(path: &String, access_token: &String) -> Result<ImageBody, ProxyError> {
     let pximg_url = format!("https://i.pximg.net/{path}");
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
@@ -87,11 +89,11 @@ pub async fn fetch_or_get_cached_image(
                 cache.insert(path, image_body.clone()).await;
 
                 return Ok(image_body);
-            },
+            }
             None => {
                 tracing::info!("Image already used");
                 immediate_cache.invalidate(&path).await
-            },
+            }
         }
     }
 
@@ -118,15 +120,13 @@ pub async fn proxy_handler(
     let cache = state.image_cache.clone();
     let immediate_cache = state.immediate_cache.clone();
 
-    Ok(
-        (
-            TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24))),
-            fetch_or_get_cached_image(path, &state.auth.access_token, cache, immediate_cache)
-                .await
-                .map_err(|e| handle_error(e.into()))?
-                .into_response()
-        )
-    )
+    Ok((
+        TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24))),
+        fetch_or_get_cached_image(path, &state.auth.access_token, cache, immediate_cache)
+            .await
+            .map_err(|e| handle_error(e.into()))?
+            .into_response(),
+    ))
 }
 
 pub async fn direct_image_handler(
@@ -140,7 +140,12 @@ pub async fn direct_image_handler(
         return Ok(Redirect::permanent(&url));
     }
 
-    let ImageUrl { image_proxy_path: _, image_proxy_url } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token).await.map_err(|e| handle_error(e.into()))?;
+    let ImageUrl {
+        image_proxy_path: _,
+        image_proxy_url,
+    } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token)
+        .await
+        .map_err(|e| handle_error(e.into()))?;
 
     Ok(Redirect::permanent(&image_proxy_url))
 }

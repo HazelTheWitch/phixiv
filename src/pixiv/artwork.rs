@@ -41,8 +41,16 @@ impl RawArtworkPath {
         };
 
         match image_index.parse::<usize>() {
-            Ok(image_index) => ArtworkPath { language: self.language, id: self.id, image_index: Some(image_index) },
-            Err(_) => ArtworkPath { language: self.language, id: self.id, image_index: None },
+            Ok(image_index) => ArtworkPath {
+                language: self.language,
+                id: self.id,
+                image_index: Some(image_index),
+            },
+            Err(_) => ArtworkPath {
+                language: self.language,
+                id: self.id,
+                image_index: None,
+            },
         }
     }
 }
@@ -100,7 +108,10 @@ impl Artwork {
     pub fn image_proxy_url(url: &str) -> Result<(String, String), ArtworkError> {
         let url = url::Url::parse(url)?;
 
-        Ok((format!("{}/i{}", env::var("HOST").unwrap(), url.path()), url.path().split_at(1).1.to_owned()))
+        Ok((
+            format!("{}/i{}", env::var("HOST").unwrap(), url.path()),
+            url.path().split_at(1).1.to_owned(),
+        ))
     }
 
     #[instrument(skip(client, access_token))]
@@ -147,26 +158,39 @@ impl Artwork {
     }
 
     #[instrument(skip(access_token))]
-    pub async fn get_image_url(client: &Client, path: &ArtworkPath, access_token: &str) -> Result<ImageUrl, PixivError> {
+    pub async fn get_image_url(
+        client: &Client,
+        path: &ArtworkPath,
+        access_token: &str,
+    ) -> Result<ImageUrl, PixivError> {
         let app_response = Artwork::app_request(client, path, access_token).await?;
 
         #[cfg(feature = "small_images")]
-        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&app_response.illust.image_urls.large)?;
+        let (image_proxy_url, image_proxy_path) =
+            Artwork::image_proxy_url(&app_response.illust.image_urls.large)?;
         #[cfg(not(feature = "small_images"))]
         let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&{
             match app_response.illust.meta_single_page.original_image_url {
                 Some(url) => url,
                 None => {
                     let pages = app_response.illust.meta_pages;
-                    match pages.get(path.image_index.unwrap_or(1).min(pages.len()).saturating_sub(1)) {
+                    match pages.get(
+                        path.image_index
+                            .unwrap_or(1)
+                            .min(pages.len())
+                            .saturating_sub(1),
+                    ) {
                         Some(meta_page) => meta_page.image_urls.original.clone(),
                         None => app_response.illust.image_urls.large.clone(),
                     }
-                },
+                }
             }
         })?;
 
-        Ok(ImageUrl { image_proxy_url, image_proxy_path })
+        Ok(ImageUrl {
+            image_proxy_url,
+            image_proxy_path,
+        })
     }
 
     #[instrument(skip(access_token))]
@@ -178,7 +202,10 @@ impl Artwork {
             Artwork::ajax_request(&client, &path),
         );
 
-        let ImageUrl { image_proxy_url, image_proxy_path } = image_url?;
+        let ImageUrl {
+            image_proxy_url,
+            image_proxy_path,
+        } = image_url?;
         let ajax_response = ajax?;
 
         let body = ajax_response.body;

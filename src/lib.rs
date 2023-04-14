@@ -17,10 +17,13 @@ use axum::{
 use bytes::Bytes;
 use http::{Request, StatusCode, Uri};
 use moka::future::Cache;
-use pixiv::{auth::{AuthError, PixivAuth}, artwork::ArtworkPath};
+use pixiv::{
+    artwork::ArtworkPath,
+    auth::{AuthError, PixivAuth},
+};
 use reqwest::Client;
 use serde::Deserialize;
-use tokio::sync::{RwLock, Mutex};
+use tokio::sync::{Mutex, RwLock};
 use tracing::instrument;
 
 pub mod phixiv;
@@ -56,7 +59,11 @@ pub struct ImageBody {
 
 impl ImageBody {
     pub fn into_response(&self) -> Response {
-        ([("Content-Type", self.content_type.clone())], self.data.clone()).into_response()
+        (
+            [("Content-Type", self.content_type.clone())],
+            self.data.clone(),
+        )
+            .into_response()
     }
 }
 
@@ -68,13 +75,20 @@ pub struct ImageKey {
 
 impl From<ArtworkPath> for ImageKey {
     fn from(path: ArtworkPath) -> Self {
-        Self { id: path.id, image_index: path.image_index }
+        Self {
+            id: path.id,
+            image_index: path.image_index,
+        }
     }
 }
 
 impl From<ImageKey> for ArtworkPath {
     fn from(key: ImageKey) -> Self {
-        Self { language: None, id: key.id, image_index: key.image_index }
+        Self {
+            language: None,
+            id: key.id,
+            image_index: key.image_index,
+        }
     }
 }
 

@@ -1,18 +1,21 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{State, Path},
-    response::{Html, Response, IntoResponse, Redirect},
+    extract::{Path, State},
+    headers::UserAgent,
+    response::{Html, IntoResponse, Redirect, Response},
     routing::get,
-    Router, headers::UserAgent, TypedHeader,
+    Router, TypedHeader,
 };
 
-use tokio::sync::{RwLock, Mutex};
+use tokio::sync::{Mutex, RwLock};
 use tracing::{info, instrument};
 
 use crate::{
     pixiv::artwork::{Artwork, RawArtworkPath},
-    pixiv_redirect, PhixivState, proxy::fetch_image,
+    pixiv_redirect,
+    proxy::fetch_image,
+    PhixivState,
 };
 
 #[instrument(skip(state))]
@@ -38,13 +41,12 @@ pub async fn artwork_handler(
 
     let state = state.read().await;
 
-    let artwork = match Artwork::from_path(&path, &state.auth.access_token)
-        .await {
-            Ok(artwork) => artwork,
-            Err(e) => {
-                tracing::error!("{e}");
-                return Err(redirect.into_response());
-            },
+    let artwork = match Artwork::from_path(&path, &state.auth.access_token).await {
+        Ok(artwork) => artwork,
+        Err(e) => {
+            tracing::error!("{e}");
+            return Err(redirect.into_response());
+        }
     };
 
     info!("Parsed artwork: {}", path.id);
@@ -52,7 +54,10 @@ pub async fn artwork_handler(
     {
         let proxy_path = artwork.image_proxy_path.clone();
 
-        state.proxy_url_cache.insert(path.into(), artwork.image_proxy_url.clone()).await;
+        state
+            .proxy_url_cache
+            .insert(path.into(), artwork.image_proxy_url.clone())
+            .await;
 
         if !state.image_cache.contains_key(&proxy_path) {
             let immediate = state.immediate_cache.clone();
@@ -65,29 +70,28 @@ pub async fn artwork_handler(
 
                 tokio::spawn(async move {
                     let mut image = image.lock().await;
-        
+
                     let Ok(image_body) = fetch_image(&proxy_path, &access_token).await else {
                         immediate.invalidate(&proxy_path).await;
                         return;
                     };
-        
+
                     *image = Some(image_body);
-        
+
                     tracing::info!("Inserted real image into immediate cache");
                 });
             }
         }
     }
 
-    Ok(Html(
-        match artwork.render_minified() {
-            Ok(html) => html,
-            Err(e) => {
-                tracing::error!("{e}");
-                return Err(redirect.into_response());
-            }
+    Ok(Html(match artwork.render_minified() {
+        Ok(html) => html,
+        Err(e) => {
+            tracing::error!("{e}");
+            return Err(redirect.into_response());
         }
-    ).into_response())
+    })
+    .into_response())
 }
 
 pub fn phixiv_router(state: Arc<RwLock<PhixivState>>) -> Router {

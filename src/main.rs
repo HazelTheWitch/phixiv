@@ -2,8 +2,11 @@ use std::{env, sync::Arc};
 
 use axum::{routing::get, Router};
 use phixiv::{
-    embed::embed_handler, phixiv::phixiv_router, pixiv_redirect, proxy::{proxy_router, direct_router}, PhixivState,
-    CACHE_SIZE,
+    embed::embed_handler,
+    phixiv::phixiv_router,
+    pixiv_redirect,
+    proxy::{direct_router, proxy_router},
+    PhixivState, CACHE_SIZE,
 };
 use tokio::sync::RwLock;
 
