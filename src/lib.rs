@@ -111,10 +111,11 @@ impl PhixivState {
             image_cache: Cache::builder()
                 .max_capacity(max_bytes)
                 .weigher(|_: &String, image: &Arc<ImageBody>| image.data.len() as u32)
+                .time_to_live(Duration::from_secs(30 * 60))
                 .build(),
             immediate_cache: Cache::builder()
                 .max_capacity(256)
-                .time_to_live(Duration::from_secs(300))
+                .time_to_live(Duration::from_secs(10))
                 .build(),
             proxy_url_cache: Cache::new(4096),
             client,
