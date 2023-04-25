@@ -30,7 +30,7 @@ pub mod phixiv;
 pub mod pixiv;
 
 const TOKEN_DURATION: u64 = 3500;
-pub const CACHE_SIZE: u64 = 256 * 1024 * 1024;
+pub const CACHE_SIZE: u64 = 128 * 1024 * 1024;
 
 #[instrument]
 pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse {
