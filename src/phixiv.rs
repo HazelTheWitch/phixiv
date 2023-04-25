@@ -34,7 +34,7 @@ pub async fn artwork_handler(
 
         if !bots.is_bot(user_agent.as_str()) {
             tracing::info!("Non-bot request, redirecting to pixiv.");
-
+ 
             return Ok(redirect.into_response());
         }
     }
