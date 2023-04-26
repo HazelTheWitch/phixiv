@@ -16,7 +16,6 @@ use axum::{
 };
 use bytes::Bytes;
 use http::{Request, StatusCode, Uri};
-use moka::future::Cache;
 use pixiv::{
     artwork::ArtworkPath,
     auth::{AuthError, PixivAuth},
@@ -95,7 +94,6 @@ impl From<ImageKey> for ArtworkPath {
 pub struct PhixivState {
     pub auth: PixivAuth,
     pub expires_after: Instant,
-    pub proxy_url_cache: Cache<ImageKey, String>,
     client: Client,
 }
 
@@ -105,7 +103,6 @@ impl PhixivState {
         Ok(Self {
             auth: PixivAuth::login(&client, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?,
             expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION),
-            proxy_url_cache: Cache::new(265),
             client,
         })
     }

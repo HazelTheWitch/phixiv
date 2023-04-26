@@ -92,11 +92,6 @@ pub async fn direct_image_handler(
 ) -> Result<Redirect, (StatusCode, String)> {
     let state = state.read().await;
 
-    if let Some(url) = state.proxy_url_cache.get(&image_key) {
-        tracing::info!("Using Cached ImageKey {:?} -> {}", image_key, url);
-        return Ok(Redirect::permanent(&url));
-    }
-
     let ImageUrl {
         image_proxy_path: _,
         image_proxy_url,
