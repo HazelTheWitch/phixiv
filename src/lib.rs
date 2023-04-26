@@ -105,7 +105,7 @@ impl PhixivState {
         Ok(Self {
             auth: PixivAuth::login(&client, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?,
             expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION),
-            proxy_url_cache: Cache::new(4096),
+            proxy_url_cache: Cache::new(265),
             client,
         })
     }
