@@ -23,6 +23,9 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["f
 url = "2"
 urlencoding = "2.1.2"
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = "0.5"
+
 [features]
 small_images = []
 bot_filtering = []
