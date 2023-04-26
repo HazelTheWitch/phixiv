@@ -215,7 +215,7 @@ impl Artwork {
             .tags
             .into_iter()
             .map(|tag| {
-                if let Some(language) = &path.language {
+                format!("#{}", if let Some(language) = &path.language {
                     if let Some(translation) = tag.translation {
                         translation.get(language).unwrap_or(&tag.tag).to_string()
                     } else {
@@ -223,7 +223,7 @@ impl Artwork {
                     }
                 } else {
                     tag.tag
-                }
+                })
             })
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
