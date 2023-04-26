@@ -23,14 +23,13 @@ use pixiv::{
 };
 use reqwest::Client;
 use serde::Deserialize;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{RwLock};
 use tracing::instrument;
 
 pub mod phixiv;
 pub mod pixiv;
 
 const TOKEN_DURATION: u64 = 3500;
-pub const CACHE_SIZE: u64 = 128 * 1024 * 1024;
 
 #[instrument]
 pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse {
@@ -96,27 +95,16 @@ impl From<ImageKey> for ArtworkPath {
 pub struct PhixivState {
     pub auth: PixivAuth,
     pub expires_after: Instant,
-    pub image_cache: Cache<String, Arc<ImageBody>>,
-    pub immediate_cache: Cache<String, Arc<Mutex<Option<ImageBody>>>>,
     pub proxy_url_cache: Cache<ImageKey, String>,
     client: Client,
 }
 
 impl PhixivState {
-    pub async fn new(max_bytes: u64) -> Result<Self, AuthError> {
+    pub async fn new() -> Result<Self, AuthError> {
         let client = Client::new();
         Ok(Self {
             auth: PixivAuth::login(&client, &env::var("PIXIV_REFRESH_TOKEN").unwrap()).await?,
             expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION),
-            image_cache: Cache::builder()
-                .max_capacity(max_bytes)
-                .weigher(|_: &String, image: &Arc<ImageBody>| image.data.len() as u32)
-                .time_to_live(Duration::from_secs(30 * 60))
-                .build(),
-            immediate_cache: Cache::builder()
-                .max_capacity(256)
-                .time_to_live(Duration::from_secs(10))
-                .build(),
             proxy_url_cache: Cache::new(4096),
             client,
         })

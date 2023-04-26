@@ -8,13 +8,12 @@ use axum::{
     Router, TypedHeader,
 };
 
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{RwLock};
 use tracing::{info, instrument};
 
 use crate::{
     pixiv::artwork::{Artwork, RawArtworkPath},
     pixiv_redirect,
-    proxy::fetch_image,
     PhixivState,
 };
 
@@ -50,39 +49,6 @@ pub async fn artwork_handler(
     };
 
     info!("Parsed artwork: {}", path.id);
-
-    {
-        let proxy_path = artwork.image_proxy_path.clone();
-
-        state
-            .proxy_url_cache
-            .insert(path.into(), artwork.image_proxy_url.clone())
-            .await;
-
-        if !state.image_cache.contains_key(&proxy_path) {
-            let immediate = state.immediate_cache.clone();
-            let access_token = state.auth.access_token.clone();
-
-            let image = Arc::new(Mutex::new(None));
-            if !immediate.contains_key(&proxy_path) {
-                immediate.insert(proxy_path.clone(), image.clone()).await;
-                tracing::info!("Inserted dummy image");
-
-                tokio::spawn(async move {
-                    let mut image = image.lock().await;
-
-                    let Ok(image_body) = fetch_image(&proxy_path, &access_token).await else {
-                        immediate.invalidate(&proxy_path).await;
-                        return;
-                    };
-
-                    *image = Some(image_body);
-
-                    tracing::info!("Inserted real image into immediate cache");
-                });
-            }
-        }
-    }
 
     Ok(Html(match artwork.render_minified() {
         Ok(html) => html,

@@ -9,10 +9,9 @@ use axum::{
     Router, TypedHeader,
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
-use moka::future::Cache;
 use reqwest::Client;
 use thiserror::Error;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{RwLock};
 use tracing::instrument;
 
 use crate::{
@@ -69,47 +68,6 @@ pub async fn fetch_image(path: &String, access_token: &String) -> Result<ImageBo
     }
 }
 
-#[instrument(skip_all)]
-pub async fn fetch_or_get_cached_image(
-    path: String,
-    access_token: &String,
-    cache: Cache<String, Arc<ImageBody>>,
-    immediate_cache: Cache<String, Arc<Mutex<Option<ImageBody>>>>,
-) -> Result<Arc<ImageBody>, ProxyError> {
-    if let Some(image) = immediate_cache.get(&path) {
-        tracing::info!("Image in immediate cache");
-
-        match image.lock().await.take() {
-            Some(image_body) => {
-                tracing::info!("Image found and cached");
-                let image_body = Arc::new(image_body);
-
-                immediate_cache.invalidate(&path).await;
-
-                cache.insert(path, image_body.clone()).await;
-
-                return Ok(image_body);
-            }
-            None => {
-                tracing::info!("Image already used");
-                immediate_cache.invalidate(&path).await
-            }
-        }
-    }
-
-    if let Some(image_body) = cache.get(&path) {
-        tracing::info!("Retrieving cached image");
-        return Ok(image_body);
-    }
-
-    tracing::info!("Fetching Image");
-    let image_body = Arc::new(fetch_image(&path, access_token).await?);
-
-    cache.insert(path, image_body.clone()).await;
-
-    Ok(image_body)
-}
-
 #[instrument(skip(state))]
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
@@ -117,12 +75,9 @@ pub async fn proxy_handler(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let state = state.read().await;
 
-    let cache = state.image_cache.clone();
-    let immediate_cache = state.immediate_cache.clone();
-
     Ok((
         TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24))),
-        fetch_or_get_cached_image(path, &state.auth.access_token, cache, immediate_cache)
+        fetch_image(&path, &state.auth.access_token)
             .await
             .map_err(|e| handle_error(e.into()))?
             .into_response(),
@@ -136,7 +91,7 @@ pub async fn direct_image_handler(
     let state = state.read().await;
 
     if let Some(url) = state.proxy_url_cache.get(&image_key) {
-        tracing::info!("Cached ImageKey {:?} -> {}", image_key, url);
+        tracing::info!("Using Cached ImageKey {:?} -> {}", image_key, url);
         return Ok(Redirect::permanent(&url));
     }
 

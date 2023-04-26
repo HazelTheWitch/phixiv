@@ -6,7 +6,7 @@ use phixiv::{
     phixiv::phixiv_router,
     pixiv_redirect,
     proxy::{direct_router, proxy_router},
-    PhixivState, CACHE_SIZE,
+    PhixivState,
 };
 use tokio::sync::RwLock;
 
@@ -18,7 +18,7 @@ async fn main() {
 
     tracing_subscriber::fmt::fmt().with_file(true).init();
 
-    let state = Arc::new(RwLock::new(PhixivState::new(CACHE_SIZE).await.unwrap()));
+    let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
 
     let phixiv = phixiv_router(state.clone());
     let proxy = proxy_router(state.clone());
