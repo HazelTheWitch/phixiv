@@ -14,7 +14,6 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Redirect, Response},
 };
-use bytes::Bytes;
 use http::{Request, StatusCode, Uri};
 use pixiv::{
     artwork::ArtworkPath,
@@ -47,22 +46,6 @@ pub async fn pixiv_redirect(OriginalUri(uri): OriginalUri) -> impl IntoResponse 
         .unwrap();
 
     Redirect::temporary(&redirect_uri.to_string())
-}
-
-#[derive(Clone)]
-pub struct ImageBody {
-    pub content_type: String,
-    pub data: Bytes,
-}
-
-impl ImageBody {
-    pub fn into_response(&self) -> Response {
-        (
-            [("Content-Type", self.content_type.clone())],
-            self.data.clone(),
-        )
-            .into_response()
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Deserialize)]
