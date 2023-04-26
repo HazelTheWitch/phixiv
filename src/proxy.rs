@@ -75,6 +75,8 @@ pub async fn proxy_handler(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let state = state.read().await;
 
+    tracing::info!("Fetching {path}");
+
     Ok((
         TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24))),
         fetch_image(&path, &state.auth.access_token)
@@ -101,6 +103,8 @@ pub async fn direct_image_handler(
     } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token)
         .await
         .map_err(|e| handle_error(e.into()))?;
+
+    tracing::info!("Redirecting to {image_proxy_url}");
 
     Ok(Redirect::permanent(&image_proxy_url))
 }
