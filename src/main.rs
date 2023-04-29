@@ -24,14 +24,8 @@ static GLOBAL: Jemalloc = Jemalloc;
 async fn main() {
     dotenvy::dotenv().ok();
 
-    let _guard = sentry::init((env::var("SENTRY_URL").unwrap().as_str(), sentry::ClientOptions {
-        release: sentry::release_name!(),
-        ..Default::default()
-    }));
-
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
-        .with(sentry_tracing::layer())
         .init();
 
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
