@@ -15,7 +15,7 @@ COPY ./templates ./templates
 
 RUN cargo build --release --features bot_filtering
 
-FROM debian:buster-slim
+FROM debian::bullseye
 COPY --from=builder /phixiv/target/release/phixiv .
 
 CMD [ "./phixiv" ]
