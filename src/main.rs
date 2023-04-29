@@ -46,6 +46,8 @@ async fn main() {
     tracing::info!("Listening on: {}", addr);
     tracing::info!("Hosted to: {}", env::var("RAILWAY_STATIC_URL").unwrap());
 
+    tracing::info!("Hello World!");
+
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
