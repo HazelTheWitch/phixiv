@@ -1,7 +1,5 @@
 #![feature(iter_intersperse)]
 
-pub mod embed;
-pub mod proxy;
 use std::{
     env,
     error::Error,
@@ -27,6 +25,8 @@ use tracing::instrument;
 
 pub mod phixiv;
 pub mod pixiv;
+pub mod embed;
+pub mod proxy;
 
 const TOKEN_DURATION: u64 = 3500;
 
