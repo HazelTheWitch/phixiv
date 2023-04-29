@@ -11,7 +11,6 @@ use phixiv::{
 use tokio::sync::RwLock;
 
 use tower_http::normalize_path::NormalizePathLayer;
-use tracing_subscriber::prelude::*;
 
 #[cfg(not(target_env = "msvc"))]
 use tikv_jemallocator::Jemalloc;
@@ -24,9 +23,7 @@ static GLOBAL: Jemalloc = Jemalloc;
 async fn main() {
     dotenvy::dotenv().ok();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    tracing_subscriber::fmt::fmt().with_file(true).init();
 
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
 
