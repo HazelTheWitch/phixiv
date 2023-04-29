@@ -109,7 +109,7 @@ impl Artwork {
         let url = url::Url::parse(url)?;
 
         Ok((
-            format!("{}/i{}", env::var("RAILWAY_STATIC_URL").unwrap(), url.path()),
+            format!("https://{}/i{}", env::var("RAILWAY_STATIC_URL").unwrap(), url.path()),
             url.path().split_at(1).1.to_owned(),
         ))
     }
