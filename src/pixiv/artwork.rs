@@ -109,7 +109,7 @@ impl Artwork {
         let url = url::Url::parse(url)?;
 
         Ok((
-            format!("{}/i{}", env::var("HOST").unwrap(), url.path()),
+            format!("{}/i{}", env::var("RAILWAY_STATIC_URL").unwrap(), url.path()),
             url.path().split_at(1).1.to_owned(),
         ))
     }
@@ -243,7 +243,7 @@ impl Artwork {
             alt_text: tag_string,
             author_name: body.author_name,
             author_id: body.author_id,
-            host: env::var("HOST").unwrap(),
+            host: env::var("RAILWAY_STATIC_URL").unwrap(),
         })
     }
 }
