@@ -6,7 +6,7 @@ use axum::{
     middleware,
     response::{IntoResponse, Redirect},
     routing::get,
-    Router, TypedHeader,
+    Router, TypedHeader, body::StreamBody,
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use reqwest::Client;
@@ -17,19 +17,17 @@ use tracing::instrument;
 use crate::{
     auth_middleware, handle_error,
     pixiv::artwork::{Artwork, ImageUrl},
-    ImageBody, ImageKey, PhixivState,
+    ImageKey, PhixivState,
 };
 
 #[derive(Error, Debug)]
 pub enum ProxyError {
     #[error("could not fetch image")]
     Fetch(#[from] reqwest::Error),
-    #[error("could not get the content type from the response")]
-    NoContentType,
 }
 
 #[instrument(skip_all)]
-pub async fn fetch_image(path: &String, access_token: &String) -> Result<ImageBody, ProxyError> {
+pub async fn fetch_image(path: &String, access_token: &String) -> Result<impl IntoResponse, ProxyError> {
     let pximg_url = format!("https://i.pximg.net/{path}");
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
@@ -52,20 +50,7 @@ pub async fn fetch_image(path: &String, access_token: &String) -> Result<ImageBo
 
     let image_response = client.get(&pximg_url).headers(headers).send().await?;
 
-    match image_response.headers().get("Content-Type") {
-        Some(content_type) => {
-            let content_type = content_type.to_str().unwrap().to_string();
-            let bytes = image_response.bytes().await?;
-
-            let image_body = ImageBody {
-                content_type,
-                data: bytes,
-            };
-
-            Ok(image_body)
-        }
-        None => Err(ProxyError::NoContentType),
-    }
+    Ok(StreamBody::new(image_response.bytes_stream()))
 }
 
 #[instrument(skip(state))]
