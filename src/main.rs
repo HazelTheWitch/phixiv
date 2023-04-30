@@ -14,6 +14,7 @@ use tower_http::normalize_path::NormalizePathLayer;
 
 #[cfg(not(target_env = "msvc"))]
 use tikv_jemallocator::Jemalloc;
+use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
@@ -23,7 +24,16 @@ static GLOBAL: Jemalloc = Jemalloc;
 async fn main() {
     dotenvy::dotenv().ok();
 
-    tracing_subscriber::fmt::fmt().with_file(true).init();
+    let _guard = sentry::init((env::var("SENTRY_URL").unwrap().as_str(), sentry::ClientOptions {
+        release: sentry::release_name!(),
+        traces_sample_rate: 0.5,
+        ..Default::default()
+    }));
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(sentry_tracing::layer())
+        .init();
 
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
 
