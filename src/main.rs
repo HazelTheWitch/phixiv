@@ -14,7 +14,7 @@ use tower_http::normalize_path::NormalizePathLayer;
 
 #[cfg(not(target_env = "msvc"))]
 use tikv_jemallocator::Jemalloc;
-use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
@@ -31,7 +31,8 @@ async fn main() {
     }));
 
     let registry = tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer());
+        .with(tracing_subscriber::fmt::layer())
+        .with(EnvFilter::from_default_env());
 
     #[cfg(feature = "sentry")]
     registry.with(sentry_tracing::layer());
