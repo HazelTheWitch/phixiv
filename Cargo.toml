@@ -12,7 +12,7 @@ http = "0.2.8"
 isbot = "0.1"
 minify-html = "0.10"
 reqwest = { version = "0.11.13", default-features = false, features = ["rustls-tls", "json", "stream"] }
-sentry = { version = "0.31.0", features = ["tracing"] }
+sentry = { version = "0.31.0", features = [] }
 sentry-tracing = "0.31.0"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1"
