@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 askama = { git = "https://github.com/djc/askama.git", rev = "32f0799" }
 axum = { version = "0.6", features = ["original-uri", "headers"] }
+axum-prometheus = "0.3.2"
 bytes = "1.4.0"
 dotenvy = "0.15.6"
 http = "0.2.8"

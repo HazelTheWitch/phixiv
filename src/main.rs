@@ -1,6 +1,7 @@
 use std::{env, sync::Arc};
 
 use axum::{routing::get, Router};
+use axum_prometheus::PrometheusMetricLayer;
 use phixiv::{
     embed::embed_handler,
     phixiv::phixiv_router,
@@ -37,6 +38,8 @@ async fn main() {
     #[cfg(feature = "sentry")]
     registry.with(sentry_tracing::layer());
 
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+
     registry.init();
 
     let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
@@ -51,7 +54,9 @@ async fn main() {
         .nest("/i", proxy)
         .nest("/d", direct)
         .fallback(pixiv_redirect)
-        .layer(NormalizePathLayer::trim_trailing_slash());
+        .layer(NormalizePathLayer::trim_trailing_slash())
+        .route("/metrics", get(|| async move { metric_handle.render() }))
+        .layer(prometheus_layer);
 
     let addr = format!("[::]:{}", env::var("PORT").unwrap_or("3000".to_owned()))
         .parse()
