@@ -26,7 +26,6 @@ async fn main() {
 
     let _guard = sentry::init((env::var("SENTRY_URL").unwrap().as_str(), sentry::ClientOptions {
         release: sentry::release_name!(),
-        traces_sample_rate: 0.5,
         ..Default::default()
     }));
 
