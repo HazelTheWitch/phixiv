@@ -71,7 +71,7 @@ pub async fn proxy_handler(
     tracing::info!("Fetching {path}");
 
     Ok((
-        TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24))),
+        TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24)).with_public()),
         fetch_image(&path, &state.auth.access_token)
             .await?
             .into_response(),
