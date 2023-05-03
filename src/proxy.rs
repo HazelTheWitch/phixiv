@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, State},
     headers::CacheControl,
     middleware,
-    response::{IntoResponse, Redirect},
+    response::{IntoResponse, Redirect, Response},
     routing::get,
     Router, TypedHeader, body::StreamBody,
 };
@@ -15,8 +15,8 @@ use tokio::sync::{RwLock};
 use tracing::instrument;
 
 use crate::{
-    auth_middleware, handle_error,
-    pixiv::artwork::{Artwork, ImageUrl},
+    auth_middleware,
+    pixiv::{artwork::{Artwork, ImageUrl}, PixivError},
     ImageKey, PhixivState,
 };
 
@@ -24,6 +24,14 @@ use crate::{
 pub enum ProxyError {
     #[error("could not fetch image")]
     Fetch(#[from] reqwest::Error),
+    #[error("underlying pixiv error")]
+    Pixiv(#[from] PixivError),
+}
+
+impl IntoResponse for ProxyError {
+    fn into_response(self) -> Response {
+        (StatusCode::INTERNAL_SERVER_ERROR, format!("{self}")).into_response()
+    }
 }
 
 #[instrument(skip_all)]
@@ -57,7 +65,7 @@ pub async fn fetch_image(path: &String, access_token: &String) -> Result<impl In
 pub async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
     Path(path): Path<String>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
+) -> Result<impl IntoResponse, ProxyError> {
     let state = state.read().await;
 
     tracing::info!("Fetching {path}");
@@ -65,8 +73,7 @@ pub async fn proxy_handler(
     Ok((
         TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24))),
         fetch_image(&path, &state.auth.access_token)
-            .await
-            .map_err(|e| handle_error(e.into()))?
+            .await?
             .into_response(),
     ))
 }
@@ -74,15 +81,14 @@ pub async fn proxy_handler(
 pub async fn direct_image_handler(
     Path(image_key): Path<ImageKey>,
     State(state): State<Arc<RwLock<PhixivState>>>,
-) -> Result<Redirect, (StatusCode, String)> {
+) -> Result<Redirect, ProxyError> {
     let state = state.read().await;
 
     let ImageUrl {
         image_proxy_path: _,
         image_proxy_url,
     } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token)
-        .await
-        .map_err(|e| handle_error(e.into()))?;
+        .await?;
 
     tracing::info!("Redirecting to {image_proxy_url}");
 
