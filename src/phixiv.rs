@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, State},
-    headers::UserAgent,
+    headers::{UserAgent, CacheControl},
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router, TypedHeader,
@@ -25,7 +25,7 @@ pub async fn artwork_handler(
 ) -> Result<Response, Response> {
     let path = path.parse();
 
-    let redirect = Redirect::temporary(&format!("http://www.pixiv.net{}", path.format_path()));
+    let redirect = (TypedHeader(CacheControl::new().with_no_cache()), Redirect::temporary(&format!("http://www.pixiv.net{}", path.format_path())));
 
     #[cfg(feature = "bot_filtering")]
     {
@@ -50,14 +50,13 @@ pub async fn artwork_handler(
 
     info!("Parsed artwork: {}", path.id);
 
-    Ok(Html(match artwork.render_minified() {
+    Ok((TypedHeader(CacheControl::new().with_no_cache()), Html(match artwork.render_minified() {
         Ok(html) => html,
         Err(e) => {
             tracing::error!("{e}");
             return Err(redirect.into_response());
         }
-    })
-    .into_response())
+    })).into_response())
 }
 
 pub fn phixiv_router(state: Arc<RwLock<PhixivState>>) -> Router {
