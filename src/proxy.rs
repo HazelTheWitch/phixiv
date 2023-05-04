@@ -1,22 +1,26 @@
 use std::{sync::Arc, time::Duration};
 
 use axum::{
+    body::StreamBody,
     extract::{Path, State},
     headers::CacheControl,
     middleware,
     response::{IntoResponse, Redirect, Response},
     routing::get,
-    Router, TypedHeader, body::StreamBody,
+    Router, TypedHeader,
 };
 use http::{HeaderMap, HeaderValue, StatusCode};
 use reqwest::Client;
 use thiserror::Error;
-use tokio::sync::{RwLock};
+use tokio::sync::RwLock;
 use tracing::instrument;
 
 use crate::{
     auth_middleware,
-    pixiv::{artwork::{Artwork, ImageUrl}, PixivError},
+    pixiv::{
+        artwork::{Artwork, ImageUrl},
+        PixivError,
+    },
     ImageKey, PhixivState,
 };
 
@@ -35,7 +39,10 @@ impl IntoResponse for ProxyError {
 }
 
 #[instrument(skip_all)]
-pub async fn fetch_image(path: &String, access_token: &String) -> Result<impl IntoResponse, ProxyError> {
+pub async fn fetch_image(
+    path: &String,
+    access_token: &String,
+) -> Result<impl IntoResponse, ProxyError> {
     let pximg_url = format!("https://i.pximg.net/{path}");
 
     let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
@@ -71,7 +78,11 @@ pub async fn proxy_handler(
     tracing::info!("Fetching {path}");
 
     Ok((
-        TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24)).with_public()),
+        TypedHeader(
+            CacheControl::new()
+                .with_max_age(Duration::from_secs(60 * 60 * 24))
+                .with_public(),
+        ),
         fetch_image(&path, &state.auth.access_token)
             .await?
             .into_response(),
@@ -87,12 +98,19 @@ pub async fn direct_image_handler(
     let ImageUrl {
         image_proxy_path: _,
         image_proxy_url,
-    } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token)
-        .await?;
+    } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token).await?;
 
     tracing::info!("Redirecting to {image_proxy_url}");
 
-    Ok((TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24)).with_public()), Redirect::permanent(&image_proxy_url)).into_response())
+    Ok((
+        TypedHeader(
+            CacheControl::new()
+                .with_max_age(Duration::from_secs(60 * 60 * 24))
+                .with_public(),
+        ),
+        Redirect::permanent(&image_proxy_url),
+    )
+        .into_response())
 }
 
 pub fn direct_router(state: Arc<RwLock<PhixivState>>) -> Router {

@@ -19,12 +19,12 @@ use pixiv::{
 };
 use reqwest::Client;
 use serde::Deserialize;
-use tokio::sync::{RwLock};
+use tokio::sync::RwLock;
 use tracing::instrument;
 
+pub mod embed;
 pub mod phixiv;
 pub mod pixiv;
-pub mod embed;
 pub mod proxy;
 
 const TOKEN_DURATION: u64 = 3500;

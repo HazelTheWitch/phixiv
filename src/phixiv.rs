@@ -2,19 +2,18 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, State},
-    headers::{UserAgent, CacheControl},
+    headers::{CacheControl, UserAgent},
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router, TypedHeader,
 };
 
-use tokio::sync::{RwLock};
+use tokio::sync::RwLock;
 use tracing::{info, instrument};
 
 use crate::{
     pixiv::artwork::{Artwork, RawArtworkPath},
-    pixiv_redirect,
-    PhixivState,
+    pixiv_redirect, PhixivState,
 };
 
 #[instrument(skip(state))]
@@ -25,7 +24,10 @@ pub async fn artwork_handler(
 ) -> Result<Response, Response> {
     let path = path.parse();
 
-    let redirect = (TypedHeader(CacheControl::new().with_no_cache()), Redirect::temporary(&format!("http://www.pixiv.net{}", path.format_path())));
+    let redirect = (
+        TypedHeader(CacheControl::new().with_no_cache()),
+        Redirect::temporary(&format!("http://www.pixiv.net{}", path.format_path())),
+    );
 
     #[cfg(feature = "bot_filtering")]
     {
@@ -33,7 +35,7 @@ pub async fn artwork_handler(
 
         if !bots.is_bot(user_agent.as_str()) {
             tracing::info!("Non-bot request, redirecting to pixiv.");
- 
+
             return Ok(redirect.into_response());
         }
     }
@@ -50,13 +52,17 @@ pub async fn artwork_handler(
 
     info!("Parsed artwork: {}", path.id);
 
-    Ok((TypedHeader(CacheControl::new().with_no_cache()), Html(match artwork.render_minified() {
-        Ok(html) => html,
-        Err(e) => {
-            tracing::error!("{e}");
-            return Err(redirect.into_response());
-        }
-    })).into_response())
+    Ok((
+        TypedHeader(CacheControl::new().with_no_cache()),
+        Html(match artwork.render_minified() {
+            Ok(html) => html,
+            Err(e) => {
+                tracing::error!("{e}");
+                return Err(redirect.into_response());
+            }
+        }),
+    )
+        .into_response())
 }
 
 pub fn phixiv_router(state: Arc<RwLock<PhixivState>>) -> Router {

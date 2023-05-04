@@ -14,7 +14,9 @@ use tower_http::normalize_path::NormalizePathLayer;
 
 #[cfg(not(target_env = "msvc"))]
 use tikv_jemallocator::Jemalloc;
-use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{
+    prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, EnvFilter,
+};
 
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
@@ -25,10 +27,13 @@ async fn main() {
     dotenvy::dotenv().ok();
 
     #[cfg(feature = "sentry")]
-    let _guard = sentry::init((env::var("SENTRY_URL").unwrap().as_str(), sentry::ClientOptions {
-        release: sentry::release_name!(),
-        ..Default::default()
-    }));
+    let _guard = sentry::init((
+        env::var("SENTRY_URL").unwrap().as_str(),
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
 
     let registry = tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())

@@ -109,7 +109,11 @@ impl Artwork {
         let url = url::Url::parse(url)?;
 
         Ok((
-            format!("https://{}/i{}", env::var("RAILWAY_STATIC_URL").unwrap(), url.path()),
+            format!(
+                "https://{}/i{}",
+                env::var("RAILWAY_STATIC_URL").unwrap(),
+                url.path()
+            ),
             url.path().split_at(1).1.to_owned(),
         ))
     }
@@ -215,15 +219,18 @@ impl Artwork {
             .tags
             .into_iter()
             .map(|tag| {
-                format!("#{}", if let Some(language) = &path.language {
-                    if let Some(translation) = tag.translation {
-                        translation.get(language).unwrap_or(&tag.tag).to_string()
+                format!(
+                    "#{}",
+                    if let Some(language) = &path.language {
+                        if let Some(translation) = tag.translation {
+                            translation.get(language).unwrap_or(&tag.tag).to_string()
+                        } else {
+                            tag.tag
+                        }
                     } else {
                         tag.tag
                     }
-                } else {
-                    tag.tag
-                })
+                )
             })
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
