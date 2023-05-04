@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use axum::{
     body::StreamBody,
     extract::{Path, State},
-    headers::CacheControl,
+    headers::{CacheControl, Host},
     middleware,
     response::{IntoResponse, Redirect, Response},
     routing::get,
@@ -92,13 +92,16 @@ pub async fn proxy_handler(
 pub async fn direct_image_handler(
     Path(image_key): Path<ImageKey>,
     State(state): State<Arc<RwLock<PhixivState>>>,
+    TypedHeader(host): TypedHeader<Host>,
 ) -> Result<Response, ProxyError> {
     let state = state.read().await;
+
+    let host = host.to_string();
 
     let ImageUrl {
         image_proxy_path: _,
         image_proxy_url,
-    } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token).await?;
+    } = Artwork::get_image_url(&Client::new(), &image_key.into(), &state.auth.access_token, &host).await?;
 
     tracing::info!("Redirecting to {image_proxy_url}");
 
