@@ -81,7 +81,7 @@ pub async fn proxy_handler(
 pub async fn direct_image_handler(
     Path(image_key): Path<ImageKey>,
     State(state): State<Arc<RwLock<PhixivState>>>,
-) -> Result<Redirect, ProxyError> {
+) -> Result<Response, ProxyError> {
     let state = state.read().await;
 
     let ImageUrl {
@@ -92,7 +92,7 @@ pub async fn direct_image_handler(
 
     tracing::info!("Redirecting to {image_proxy_url}");
 
-    Ok(Redirect::permanent(&image_proxy_url))
+    Ok((TypedHeader(CacheControl::new().with_max_age(Duration::from_secs(60 * 60 * 24)).with_public()), Redirect::permanent(&image_proxy_url)).into_response())
 }
 
 pub fn direct_router(state: Arc<RwLock<PhixivState>>) -> Router {
