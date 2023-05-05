@@ -1,6 +1,7 @@
 use std::{env, sync::Arc};
 
-use axum::{routing::get, Router};
+use axum::{routing::get, Router, response::IntoResponse, Json};
+use serde_json::json;
 use phixiv::{
     embed::embed_handler,
     phixiv::phixiv_router,
@@ -53,6 +54,7 @@ async fn main() {
     let app = Router::new()
         .merge(phixiv)
         .route("/e", get(embed_handler))
+        .route("/health", get(health))
         .nest("/i", proxy)
         .nest("/d", direct)
         .fallback(pixiv_redirect)
@@ -69,4 +71,8 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+async fn health() -> impl IntoResponse {
+    Json(json!({ "health": "UP" }))
 }
