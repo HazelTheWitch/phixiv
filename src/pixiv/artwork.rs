@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, string::FromUtf8Error};
+use std::{collections::HashMap, string::FromUtf8Error};
 
 use askama::Template;
 use http::{HeaderMap, HeaderValue};
@@ -105,13 +105,13 @@ impl Artwork {
         Ok(String::from_utf8(minified)?)
     }
 
-    pub fn image_proxy_url(url: &str) -> Result<(String, String), ArtworkError> {
+    pub fn image_proxy_url(url: &str, host: &str) -> Result<(String, String), ArtworkError> {
         let url = url::Url::parse(url)?;
 
         Ok((
             format!(
                 "https://{}/i{}",
-                env::var("RAILWAY_STATIC_URL").unwrap(),
+                host,
                 url.path()
             ),
             url.path().split_at(1).1.to_owned(),
@@ -166,6 +166,7 @@ impl Artwork {
         client: &Client,
         path: &ArtworkPath,
         access_token: &str,
+        host: &str,
     ) -> Result<ImageUrl, PixivError> {
         let app_response = Artwork::app_request(client, path, access_token).await?;
 
@@ -189,7 +190,7 @@ impl Artwork {
                     }
                 }
             }
-        })?;
+        }, &host)?;
 
         Ok(ImageUrl {
             image_proxy_url,
@@ -198,11 +199,11 @@ impl Artwork {
     }
 
     #[instrument(skip(access_token))]
-    pub async fn from_path(path: &ArtworkPath, access_token: &str) -> Result<Self, PixivError> {
+    pub async fn from_path(path: &ArtworkPath, access_token: &str, host: String) -> Result<Self, PixivError> {
         let client = Client::new();
 
         let (image_url, ajax) = tokio::join!(
-            Artwork::get_image_url(&client, &path, access_token),
+            Artwork::get_image_url(&client, &path, access_token, &host),
             Artwork::ajax_request(&client, &path),
         );
 
@@ -250,7 +251,7 @@ impl Artwork {
             alt_text: tag_string,
             author_name: body.author_name,
             author_id: body.author_id,
-            host: env::var("RAILWAY_STATIC_URL").unwrap(),
+            host,
         })
     }
 }

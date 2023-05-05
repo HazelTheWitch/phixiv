@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, State},
-    headers::{CacheControl, UserAgent},
+    headers::{CacheControl, UserAgent, Host},
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router, TypedHeader,
@@ -21,8 +21,11 @@ pub async fn artwork_handler(
     Path(path): Path<RawArtworkPath>,
     State(state): State<Arc<RwLock<PhixivState>>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
+    TypedHeader(host): TypedHeader<Host>,
 ) -> Result<Response, Response> {
     let path = path.parse();
+
+    let host = host.to_string();
 
     let redirect = (
         TypedHeader(CacheControl::new().with_no_cache()),
@@ -42,7 +45,7 @@ pub async fn artwork_handler(
 
     let state = state.read().await;
 
-    let artwork = match Artwork::from_path(&path, &state.auth.access_token).await {
+    let artwork = match Artwork::from_path(&path, &state.auth.access_token, host).await {
         Ok(artwork) => artwork,
         Err(e) => {
             tracing::error!("{e}");
