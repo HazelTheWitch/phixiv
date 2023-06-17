@@ -29,7 +29,6 @@ urlencoding = "2.1.2"
 tikv-jemallocator = "0.5"
 
 [features]
-small_images = []
 bot_filtering = []
 sentry = ["dep:sentry", "dep:sentry-tracing"]
 
