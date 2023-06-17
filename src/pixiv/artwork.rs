@@ -170,10 +170,6 @@ impl Artwork {
     ) -> Result<ImageUrl, PixivError> {
         let app_response = Artwork::app_request(client, path, access_token).await?;
 
-        #[cfg(feature = "small_images")]
-        let (image_proxy_url, image_proxy_path) =
-            Artwork::image_proxy_url(&app_response.illust.image_urls.large)?;
-        #[cfg(not(feature = "small_images"))]
         let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&{
             match app_response.illust.meta_single_page.original_image_url {
                 Some(url) => url,
