@@ -76,6 +76,12 @@ pub struct ImageUrl {
     pub image_proxy_path: String,
 }
 
+#[derive(Debug)]
+pub enum ImageSize {
+    Original,
+    Large,
+}
+
 #[derive(Debug, Serialize, Template)]
 #[template(path = "artwork.html")]
 pub struct Artwork {
@@ -109,11 +115,7 @@ impl Artwork {
         let url = url::Url::parse(url)?;
 
         Ok((
-            format!(
-                "https://{}/i{}",
-                host,
-                url.path()
-            ),
+            format!("https://{}/i{}", host, url.path()),
             url.path().split_at(1).1.to_owned(),
         ))
     }
@@ -167,26 +169,49 @@ impl Artwork {
         path: &ArtworkPath,
         access_token: &str,
         host: &str,
+        size: ImageSize,
     ) -> Result<ImageUrl, PixivError> {
         let app_response = Artwork::app_request(client, path, access_token).await?;
 
-        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(&{
-            match app_response.illust.meta_single_page.original_image_url {
-                Some(url) => url,
-                None => {
-                    let pages = app_response.illust.meta_pages;
-                    match pages.get(
-                        path.image_index
-                            .unwrap_or(1)
-                            .min(pages.len())
-                            .saturating_sub(1),
-                    ) {
-                        Some(meta_page) => meta_page.image_urls.original.clone(),
-                        None => app_response.illust.image_urls.large.clone(),
+        let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(
+            &match size {
+                ImageSize::Original => {
+                    match app_response.illust.meta_single_page.original_image_url {
+                        Some(url) => url,
+                        None => {
+                            let pages = app_response.illust.meta_pages;
+                            match pages.get(
+                                path.image_index
+                                    .unwrap_or(1)
+                                    .min(pages.len())
+                                    .saturating_sub(1),
+                            ) {
+                                Some(meta_page) => meta_page.image_urls.original.clone(),
+                                None => app_response.illust.image_urls.large.clone(),
+                            }
+                        }
                     }
                 }
-            }
-        }, &host)?;
+                ImageSize::Large => {
+                    if app_response.illust.meta_pages.len() == 0 {
+                        app_response.illust.image_urls.large
+                    } else {
+                        let pages = app_response.illust.meta_pages;
+
+                        match pages.get(
+                            path.image_index
+                                .unwrap_or(1)
+                                .min(pages.len())
+                                .saturating_sub(1),
+                        ) {
+                            Some(meta_page) => meta_page.image_urls.large.clone(),
+                            None => app_response.illust.image_urls.large.clone(),
+                        }
+                    }
+                }
+            },
+            &host,
+        )?;
 
         Ok(ImageUrl {
             image_proxy_url,
@@ -195,11 +220,15 @@ impl Artwork {
     }
 
     #[instrument(skip(access_token))]
-    pub async fn from_path(path: &ArtworkPath, access_token: &str, host: String) -> Result<Self, PixivError> {
+    pub async fn from_path(
+        path: &ArtworkPath,
+        access_token: &str,
+        host: String,
+    ) -> Result<Self, PixivError> {
         let client = Client::new();
 
         let (image_url, ajax) = tokio::join!(
-            Artwork::get_image_url(&client, &path, access_token, &host),
+            Artwork::get_image_url(&client, &path, access_token, &host, ImageSize::Large),
             Artwork::ajax_request(&client, &path),
         );
 

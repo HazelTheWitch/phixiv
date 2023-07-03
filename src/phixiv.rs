@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, State},
-    headers::{CacheControl, UserAgent, Host},
+    headers::{CacheControl, Host, UserAgent},
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router, TypedHeader,

@@ -28,6 +28,7 @@ pub struct MetaPage {
 #[derive(Debug, Deserialize)]
 pub struct MetaPageImageUrls {
     pub original: String,
+    pub large: String,
 }
 
 #[derive(Debug, Deserialize)]
