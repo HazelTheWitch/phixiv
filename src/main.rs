@@ -1,7 +1,6 @@
 use std::{env, sync::Arc};
 
-use axum::{routing::get, Router, response::IntoResponse, Json};
-use serde_json::json;
+use axum::{response::IntoResponse, routing::get, Json, Router};
 use phixiv::{
     embed::embed_handler,
     phixiv::phixiv_router,
@@ -9,6 +8,7 @@ use phixiv::{
     proxy::{direct_router, proxy_router},
     PhixivState,
 };
+use serde_json::json;
 use tokio::sync::RwLock;
 
 use tower_http::normalize_path::NormalizePathLayer;
