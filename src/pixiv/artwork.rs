@@ -121,12 +121,12 @@ impl Artwork {
     }
 
     #[instrument(skip(client, access_token))]
-    async fn app_request(
+    pub async fn app_request(
         client: &Client,
-        path: &ArtworkPath,
+        id: String,
         access_token: &str,
     ) -> Result<AppReponse, PixivError> {
-        let params = HashMap::from([("illust_id", &path.id)]);
+        let params = HashMap::from([("illust_id", &id)]);
 
         let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
 
@@ -153,11 +153,11 @@ impl Artwork {
     }
 
     #[instrument(skip(client))]
-    async fn ajax_request(client: &Client, path: &ArtworkPath) -> Result<AjaxResponse, PixivError> {
+    pub async fn ajax_request(client: &Client, id: String, language: Option<String>) -> Result<AjaxResponse, PixivError> {
         let ajax_url = format!(
             "https://www.pixiv.net/ajax/illust/{}?lang={}",
-            &path.id,
-            &path.language.clone().unwrap_or_else(|| "jp".to_owned())
+            &id,
+            &language.clone().unwrap_or_else(|| "jp".to_owned())
         );
 
         Ok(client.get(ajax_url).send().await?.json().await?)
@@ -171,7 +171,7 @@ impl Artwork {
         host: &str,
         size: ImageSize,
     ) -> Result<ImageUrl, PixivError> {
-        let app_response = Artwork::app_request(client, path, access_token).await?;
+        let app_response = Artwork::app_request(client, path.id.clone(), access_token).await?;
 
         let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(
             &match size {
@@ -229,7 +229,7 @@ impl Artwork {
 
         let (image_url, ajax) = tokio::join!(
             Artwork::get_image_url(&client, &path, access_token, &host, ImageSize::Large),
-            Artwork::ajax_request(&client, &path),
+            Artwork::ajax_request(&client, path.id.clone(), path.language.clone()),
         );
 
         let ImageUrl {

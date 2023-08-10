@@ -2,6 +2,8 @@ pub mod artwork;
 pub mod auth;
 mod payloads;
 
+use axum::response::IntoResponse;
+use http::StatusCode;
 use thiserror::Error;
 
 use self::{artwork::ArtworkError, auth::AuthError};
@@ -18,4 +20,10 @@ pub enum PixivError {
     Artwork(#[from] ArtworkError),
     #[error("failed to authenticate with pixiv")]
     Auth(#[from] AuthError),
+}
+
+impl IntoResponse for PixivError {
+    fn into_response(self) -> axum::response::Response {
+        (StatusCode::INTERNAL_SERVER_ERROR, format!("{self}")).into_response()
+    }
 }

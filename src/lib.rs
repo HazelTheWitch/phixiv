@@ -26,6 +26,7 @@ pub mod embed;
 pub mod phixiv;
 pub mod pixiv;
 pub mod proxy;
+pub mod api;
 
 const TOKEN_DURATION: u64 = 3500;
 
