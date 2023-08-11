@@ -21,6 +21,12 @@ The following are the valid paths for artworks, if there is a format which isn't
 /:language/artworks/:id/:index
 ```
 
+A simple API for basic information such as tags and direct image links are provided.
+
+```text
+/api/info?id=<id>&lang=<language>
+```
+
 In addition, direct image links are in these forms.
 
 ```text
