@@ -60,7 +60,17 @@ pub async fn artwork_info_handler(
         urls,
         title: ajax_response.body.title,
         description: ajax_response.body.description,
-        tags: ajax_response.body.tags.tags.into_iter().map(|tag| tag.tag).collect(),
+        tags: ajax_response.body.tags.tags.into_iter().map(|tag|
+            if let Some(language) = &path.language {
+                if let Some(translation) = tag.translation {
+                    translation.get(language).unwrap_or(&tag.tag).to_string()
+                } else {
+                    tag.tag
+                }
+            } else {
+                tag.tag
+            }
+        ).collect(),
         author: AuthorInfo {
             id: ajax_response.body.author_id,
             name: ajax_response.body.author_name
