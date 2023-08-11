@@ -5,7 +5,7 @@ use phixiv::{
     embed::embed_handler,
     phixiv::phixiv_router,
     pixiv_redirect,
-    proxy::{direct_router, proxy_router},
+    proxy::proxy_router,
     PhixivState, api::api_router,
 };
 use serde_json::json;
@@ -49,7 +49,6 @@ async fn main() {
 
     let phixiv = phixiv_router(state.clone());
     let proxy = proxy_router(state.clone());
-    let direct = direct_router(state.clone());
     let api = api_router(state.clone());
 
     let app = Router::new()
@@ -57,7 +56,6 @@ async fn main() {
         .route("/e", get(embed_handler))
         .route("/health", get(health))
         .nest("/i", proxy)
-        .nest("/d", direct)
         .nest("/api", api)
         .fallback(pixiv_redirect)
         .layer(NormalizePathLayer::trim_trailing_slash());
