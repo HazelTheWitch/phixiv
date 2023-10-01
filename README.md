@@ -19,6 +19,7 @@ The following are the valid paths for artworks, if there is a format which isn't
 /:language/artworks/:id
 /artworks/:id/:index
 /:language/artworks/:id/:index
+/member_illust.php?illust_id=:id
 ```
 
 A simple API for basic information such as tags and direct image links are provided.
