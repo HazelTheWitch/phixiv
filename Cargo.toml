@@ -31,6 +31,3 @@ tikv-jemallocator = "0.5"
 [features]
 bot_filtering = []
 sentry = ["dep:sentry", "dep:sentry-tracing"]
-
-[registries.crates-io]
-protocol = "sparse"
