@@ -8,6 +8,6 @@ FROM debian:bullseye
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev
 
-COPY --from=builder /phixiv/target/release/phixiv .
+COPY --from=builder /usr/local/cargo/bin/phixiv /usr/local/bin/phixiv
 
-CMD [ "./phixiv" ]
+CMD [ "phixiv" ]
