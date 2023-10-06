@@ -18,7 +18,7 @@ use tracing::instrument;
 use crate::{
     auth_middleware,
     pixiv::{
-        artwork::{Artwork, ImageSize, ImageUrl},
+        artwork::{Artwork, ImageSize, ImageUrl, ArtworkPath},
         PixivError,
     },
     ImageKey, PhixivState,
@@ -98,17 +98,14 @@ pub async fn direct_image_handler(
 
     let host = host.to_string();
 
+    let path: ArtworkPath = image_key.into();
+
+    let app_response = Artwork::app_request(&Client::new(), &path.id, &state.auth.access_token).await?;
+
     let ImageUrl {
         image_proxy_path: _,
         image_proxy_url,
-    } = Artwork::get_image_url(
-        &Client::new(),
-        &image_key.into(),
-        &state.auth.access_token,
-        &host,
-        ImageSize::Original,
-    )
-    .await?;
+    } = Artwork::get_image_url(app_response, &path, &host, ImageSize::Large)?;
 
     tracing::info!("Redirecting to {image_proxy_url}");
 

@@ -38,8 +38,8 @@ pub async fn artwork_info_handler(
     let client = Client::new();
 
     let (ajax_response, app_response) = tokio::join!(
-        Artwork::ajax_request(&client, path.id.clone(), path.language.clone()),
-        Artwork::app_request(&client, path.id.clone(), &state.auth.access_token),
+        Artwork::ajax_request(&client, &path.id, path.language.clone()),
+        Artwork::app_request(&client, &path.id, &state.auth.access_token),
     );
 
     let ajax_response = ajax_response.map_err(|e| e.into_response())?;

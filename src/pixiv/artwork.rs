@@ -123,10 +123,10 @@ impl Artwork {
     #[instrument(skip(client, access_token))]
     pub async fn app_request(
         client: &Client,
-        id: String,
+        id: &String,
         access_token: &str,
     ) -> Result<AppReponse, PixivError> {
-        let params = HashMap::from([("illust_id", &id)]);
+        let params = HashMap::from([("illust_id", id)]);
 
         let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(5);
 
@@ -153,7 +153,7 @@ impl Artwork {
     }
 
     #[instrument(skip(client))]
-    pub async fn ajax_request(client: &Client, id: String, language: Option<String>) -> Result<AjaxResponse, PixivError> {
+    pub async fn ajax_request(client: &Client, id: &String, language: Option<String>) -> Result<AjaxResponse, PixivError> {
         let ajax_url = format!(
             "https://www.pixiv.net/ajax/illust/{}?lang={}",
             &id,
@@ -163,15 +163,14 @@ impl Artwork {
         Ok(client.get(ajax_url).send().await?.json().await?)
     }
 
-    #[instrument(skip(access_token))]
-    pub async fn get_image_url(
-        client: &Client,
+    #[instrument]
+    pub fn get_image_url(
+        app_response: AppReponse,
         path: &ArtworkPath,
-        access_token: &str,
         host: &str,
         size: ImageSize,
     ) -> Result<ImageUrl, PixivError> {
-        let app_response = Artwork::app_request(client, path.id.clone(), access_token).await?;
+        // let app_response = Artwork::app_request(client, path.id.clone(), access_token).await?;
 
         let (image_proxy_url, image_proxy_path) = Artwork::image_proxy_url(
             &match size {
@@ -227,18 +226,21 @@ impl Artwork {
     ) -> Result<Self, PixivError> {
         let client = Client::new();
 
-        let (image_url, ajax) = tokio::join!(
-            Artwork::get_image_url(&client, &path, access_token, &host, ImageSize::Large),
-            Artwork::ajax_request(&client, path.id.clone(), path.language.clone()),
+        let (app_response, ajax_response) = tokio::join!(
+            Artwork::app_request(&client, &path.id, access_token),
+            // Artwork::get_image_url(&client, &path, access_token, &host, ImageSize::Large),
+            Artwork::ajax_request(&client, &path.id, path.language.clone()),
         );
+
+        let app_response = app_response?;
+        let body = ajax_response?.body;
+
+        let ai_generated = app_response.illust.illust_ai_type == 2;
 
         let ImageUrl {
             image_proxy_url,
             image_proxy_path,
-        } = image_url?;
-        let ajax_response = ajax?;
-
-        let body = ajax_response.body;
+        } = Artwork::get_image_url(app_response, &path, &host, ImageSize::Large)?;
 
         let tag_string = body
             .tags
@@ -261,11 +263,7 @@ impl Artwork {
             .intersperse_with(|| String::from(", "))
             .collect::<String>();
 
-        let description = if body.description.is_empty() {
-            tag_string.clone()
-        } else {
-            body.description
-        };
+        let description = format!("{}{}{}", if ai_generated { "AI Generated\n" } else { "" }, body.description, tag_string.clone());
 
         Ok(Self {
             image_proxy_url,
