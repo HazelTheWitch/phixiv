@@ -1,10 +1,10 @@
-FROM rust:1.73 as builder
+FROM rust:latest as builder
 
 WORKDIR /usr/src/phixiv
 COPY . .
 RUN cargo install --path .
 
-FROM debian:bullseye
+FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y pkg-config libssl-dev
 
