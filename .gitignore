@@ -6,3 +6,4 @@ commands.txt
 .vscode
 
 *.service
+Dockerfile
