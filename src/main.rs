@@ -27,7 +27,7 @@ use tracing_subscriber::{
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    dotenvy::dotenv()?;
+    dotenvy::dotenv().ok();
 
     let addr: SocketAddr = format!(
         "[::]:{}",
