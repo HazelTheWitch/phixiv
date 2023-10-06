@@ -4,30 +4,25 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-askama = { git = "https://github.com/djc/askama.git", rev = "32f0799" }
-axum = { version = "0.6", features = ["original-uri", "headers"] }
-bytes = "1.4.0"
-dotenvy = "0.15.6"
-http = "0.2.8"
+anyhow = "1"
+askama = "0.12"
+axum = { version = "0.6", features = ["original-uri", "headers", "macros"] }
+# bytes = "1.4.0"
+dotenvy = "0.15"
+http = "0.2"
 isbot = "0.1"
-minify-html = "0.10"
-reqwest = { version = "0.11.13", default-features = false, features = ["rustls-tls", "json", "stream"] }
-sentry = { version = "0.31.0", features = ["backtrace", "contexts", "panic", "reqwest", "rustls"], default-features = false, optional = true }
-sentry-tracing = { version = "0.31.0", optional = true }
+itertools = "0.11.0"
+reqwest = { version = "0.11", features = ["json", "stream"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
-thiserror = "1"
 tokio = { version = "1", features = ["full"] }
-tower = "0.4.13"
-tower-http = { version = "0.4", features = ["trace", "normalize-path", "compression-full"] }
+tower = "0.4"
+tower-http = { version = "0.4", features = ["trace", "normalize-path"] }
 tracing = { version = "0.1", features = ["log"] }
-tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
+# tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
+# url = "2"
+# urlencoding = "2.1.2"
+tracing-loki = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = "2"
-urlencoding = "2.1.2"
-
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = "0.5"
-
-[features]
-bot_filtering = []
-sentry = ["dep:sentry", "dep:sentry-tracing"]
+urlencoding = "2.1.3"
