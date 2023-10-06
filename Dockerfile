@@ -1,19 +1,8 @@
-FROM rustlang/rust:nightly as builder
+FROM rust:1.73 as builder
 
-RUN cargo new --bin phixiv
-
-WORKDIR /phixiv
-
-COPY ./Cargo.toml ./Cargo.toml
-
-RUN cargo check --release
-
-RUN rm -rf ./src
-
-COPY ./src ./src
-COPY ./templates ./templates
-
-RUN cargo build --release
+WORKDIR /usr/src/phixiv
+COPY . .
+RUN cargo install --path .
 
 FROM debian:bullseye
 
