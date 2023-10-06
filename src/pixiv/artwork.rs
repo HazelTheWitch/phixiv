@@ -266,7 +266,7 @@ impl Artwork {
         let description = [String::from(if ai_generated { "AI Generated\n" } else { "" }), body.description, tag_string.clone()]
             .into_iter()
             .filter(|s| !s.is_empty())
-            .intersperse_with(|| String::from(", "))
+            .intersperse_with(|| String::from("\n"))
             .collect::<String>();
 
         Ok(Self {
