@@ -3,47 +3,39 @@ use std::collections::HashMap;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
-pub struct AppReponse {
+pub(super) struct AppReponse {
     pub illust: IllustrationResponse,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct IllustrationResponse {
+pub(super) struct IllustrationResponse {
     pub image_urls: ImageUrls,
-    pub meta_single_page: MetaSinglePage,
     pub meta_pages: Vec<MetaPage>,
     pub illust_ai_type: u8,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct MetaSinglePage {
-    pub original_image_url: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct MetaPage {
+pub(super) struct MetaPage {
     pub image_urls: MetaPageImageUrls,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct MetaPageImageUrls {
-    pub original: String,
+pub(super) struct MetaPageImageUrls {
     pub large: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ImageUrls {
+pub(super) struct ImageUrls {
     pub large: String,
-    pub medium: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct AjaxResponse {
+pub(super) struct AjaxResponse {
     pub body: AjaxBody,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct AjaxBody {
+pub(super) struct AjaxBody {
     pub title: String,
     pub description: String,
     pub tags: Tags,
@@ -56,33 +48,22 @@ pub struct AjaxBody {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Tags {
+pub(super) struct Tags {
     pub tags: Vec<Tag>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Tag {
+pub(super) struct Tag {
     pub tag: String,
     pub translation: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct AjaxExtraData {
+pub(super) struct AjaxExtraData {
     pub meta: AjaxMeta,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct AjaxMeta {
+pub(super) struct AjaxMeta {
     pub canonical: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct AuthPayload {
-    pub response: AuthResponse,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct AuthResponse {
-    pub access_token: String,
-    pub refresh_token: String,
 }

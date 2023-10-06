@@ -1,75 +1,111 @@
-use std::{env, sync::Arc};
+pub mod api;
+pub mod auth;
+pub mod embed;
+pub mod helper;
+pub mod oembed;
+pub mod pixiv;
+pub mod proxy;
+pub mod state;
 
+use std::{env, net::SocketAddr, sync::Arc};
+
+use api::api_router;
 use axum::{response::IntoResponse, routing::get, Json, Router};
-use phixiv::{
-    embed::embed_handler,
-    phixiv::phixiv_router,
-    pixiv_redirect,
-    proxy::proxy_router,
-    PhixivState, api::api_router,
-};
+use oembed::oembed_handler;
+use proxy::proxy_router;
 use serde_json::json;
+use state::PhixivState;
 use tokio::sync::RwLock;
-
-use tower_http::normalize_path::NormalizePathLayer;
-
-#[cfg(not(target_env = "msvc"))]
-use tikv_jemallocator::Jemalloc;
-use tracing_subscriber::{
-    prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, EnvFilter,
+use tower_http::{
+    normalize_path::NormalizePathLayer,
+    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer},
 };
-
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
+use tracing::Level;
+use tracing_subscriber::{
+    fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, EnvFilter,
+};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
 
-    #[cfg(feature = "sentry")]
-    let _guard = sentry::init((
-        env::var("SENTRY_URL").unwrap().as_str(),
-        sentry::ClientOptions {
-            release: sentry::release_name!(),
-            ..Default::default()
-        },
-    ));
+    let addr: SocketAddr = format!(
+        "[::]:{}",
+        env::var("PORT").unwrap_or_else(|_| String::from("3000"))
+    )
+    .parse()?;
 
-    let registry = tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer())
+    let tracing_registry = tracing_subscriber::registry()
+        .with(fmt::layer())
         .with(EnvFilter::from_default_env());
 
-    #[cfg(feature = "sentry")]
-    registry.with(sentry_tracing::layer());
+    if let Ok(loki_url) = env::var("LOKI_URL") {
+        let (layer, task) = tracing_loki::builder()
+            .label(
+                "environment",
+                &env::var("ENVIRONMENT").unwrap_or_else(|_| String::from("development")),
+            )?
+            .build_url(url::Url::parse(&loki_url).unwrap())?;
 
-    registry.init();
+        tokio::spawn(task);
 
-    let state = Arc::new(RwLock::new(PhixivState::new().await.unwrap()));
+        tracing_registry.with(layer).init();
+    } else {
+        tracing_registry.init();
+    }
 
-    let phixiv = phixiv_router(state.clone());
-    let proxy = proxy_router(state.clone());
-    let api = api_router(state.clone());
+    tracing::info!("Listening on: {addr}");
 
-    let app = Router::new()
-        .merge(phixiv)
-        .route("/e", get(embed_handler))
-        .route("/health", get(health))
-        .nest("/i", proxy)
-        .nest("/api", api)
-        .fallback(pixiv_redirect)
-        .layer(NormalizePathLayer::trim_trailing_slash());
-
-    let addr = format!("[::]:{}", env::var("PORT").unwrap_or("3000".to_owned()))
-        .parse()
-        .unwrap();
-
-    tracing::info!("Listening on: {}", addr);
+    let state = Arc::new(RwLock::new(
+        PhixivState::login(env::var("PIXIV_REFRESH_TOKEN")?).await?,
+    ));
 
     axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+        .serve(app(state).into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+
+    Ok(())
+}
+
+fn app(state: Arc<RwLock<PhixivState>>) -> Router {
+    Router::new()
+        .merge(embed::router(state.clone()))
+        .route("/health", get(health))
+        .route("/e", get(oembed_handler))
+        .nest("/i", proxy_router(state.clone()))
+        .nest("/api", api_router(state.clone()))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_request(DefaultOnRequest::new().level(Level::INFO)),
+        )
+        .layer(NormalizePathLayer::trim_trailing_slash())
+        .with_state(state)
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }
 
 async fn health() -> impl IntoResponse {

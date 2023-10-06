@@ -1,21 +1,13 @@
-FROM rustlang/rust:nightly as builder
+FROM rust:latest as builder
 
-RUN cargo new --bin phixiv
+WORKDIR /usr/src/phixiv
+COPY . .
+RUN cargo install --path .
 
-WORKDIR /phixiv
+FROM debian:bookworm-slim
 
-COPY ./Cargo.toml ./Cargo.toml
+RUN apt-get update && apt-get install -y openssl ca-certificates
 
-RUN cargo build --release
+COPY --from=builder /usr/local/cargo/bin/phixiv /usr/local/bin/phixiv
 
-RUN rm -rf ./src
-
-COPY ./src ./src
-COPY ./templates ./templates
-
-RUN cargo build --release --features bot_filtering
-
-FROM debian:bullseye
-COPY --from=builder /phixiv/target/release/phixiv .
-
-CMD [ "./phixiv" ]
+CMD [ "phixiv" ]
