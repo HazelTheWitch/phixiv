@@ -33,7 +33,7 @@ pub struct Authorized(pub Arc<String>);
 pub async fn authorized_middleware<B>(
     State(state): State<Arc<RwLock<PhixivState>>>,
     request: Request<B>,
-    next: Next<B>
+    next: Next<B>,
 ) -> Result<Response, PhixivError> {
     if state.read().await.auth.expired() {
         let mut state = state.write().await;

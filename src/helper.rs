@@ -6,7 +6,10 @@ pub fn headers() -> HeaderMap<HeaderValue> {
 
     headers.append("App-Os", "iOS".parse().unwrap());
     headers.append("App-Os-Version", "14.6".parse().unwrap());
-    headers.append("User-Agent", "PixivIOSApp/7.13.3 (iOS 14.6; iPhone13,2)".parse().unwrap());
+    headers.append(
+        "User-Agent",
+        "PixivIOSApp/7.13.3 (iOS 14.6; iPhone13,2)".parse().unwrap(),
+    );
 
     headers
 }

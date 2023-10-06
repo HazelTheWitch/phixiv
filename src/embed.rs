@@ -1,13 +1,24 @@
-use std::{sync::Arc, env};
+use std::{env, sync::Arc};
 
 use askama::Template;
-use axum::{Router, extract::{Path, State, OriginalUri, Query, Host}, response::{IntoResponse, Response, Redirect, Html}, TypedHeader, headers::{UserAgent, CacheControl}, middleware::{Next, self}, routing::get};
+use axum::{
+    extract::{Host, OriginalUri, Path, Query, State},
+    headers::{CacheControl, UserAgent},
+    middleware::{self, Next},
+    response::{Html, IntoResponse, Redirect, Response},
+    routing::get,
+    Router, TypedHeader,
+};
 use http::{Request, Uri};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use tower::ServiceBuilder;
 
-use crate::{state::{PhixivState, authorized_middleware}, helper::PhixivError, pixiv::{RawArtworkPath, ArtworkPath, ArtworkListing}};
+use crate::{
+    helper::PhixivError,
+    pixiv::{ArtworkListing, ArtworkPath, RawArtworkPath},
+    state::{authorized_middleware, PhixivState},
+};
 
 async fn artwork_response(
     raw_path: RawArtworkPath,
@@ -18,14 +29,22 @@ async fn artwork_response(
 
     let state = state.read().await;
 
-    let listing = ArtworkListing::get_listing(path.language, path.id, &state.auth.access_token, &host, &state.client).await?;
+    let listing = ArtworkListing::get_listing(
+        path.language,
+        path.id,
+        &state.auth.access_token,
+        &host,
+        &state.client,
+    )
+    .await?;
 
     let artwork = listing.to_template(path.image_index, host);
 
     Ok((
         TypedHeader(CacheControl::new().with_no_cache()),
-        Html(artwork.render()?)
-    ).into_response())
+        Html(artwork.render()?),
+    )
+        .into_response())
 }
 
 async fn artwork_handler(
@@ -43,7 +62,11 @@ struct MemberIllustParams {
 
 impl From<MemberIllustParams> for RawArtworkPath {
     fn from(params: MemberIllustParams) -> Self {
-        Self { language: None, id: params.illust_id, image_index: None }
+        Self {
+            language: None,
+            id: params.illust_id,
+            image_index: None,
+        }
     }
 }
 
@@ -73,9 +96,12 @@ async fn redirect_middleware<B>(
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     OriginalUri(uri): OriginalUri,
     request: Request<B>,
-    next: Next<B>
+    next: Next<B>,
 ) -> Result<Response, PhixivError> {
-    if env::var("BOT_FILTERING").unwrap_or_else(|_| String::from("false")).parse::<bool>()? {
+    if env::var("BOT_FILTERING")
+        .unwrap_or_else(|_| String::from("false"))
+        .parse::<bool>()?
+    {
         let bots = isbot::Bots::default();
 
         if !bots.is_bot(user_agent.as_str()) {
@@ -86,13 +112,13 @@ async fn redirect_middleware<B>(
     Ok(next.run(request).await)
 }
 
-async fn redirect_fallback(
-    OriginalUri(uri): OriginalUri,
-) -> Redirect {
+async fn redirect_fallback(OriginalUri(uri): OriginalUri) -> Redirect {
     Redirect::temporary(&redirect_uri(uri))
 }
 
-pub fn router(state: Arc<RwLock<PhixivState>>) -> Router<Arc<RwLock<PhixivState>>, axum::body::Body> {
+pub fn router(
+    state: Arc<RwLock<PhixivState>>,
+) -> Router<Arc<RwLock<PhixivState>>, axum::body::Body> {
     Router::new()
         .route("/:language/artworks/:id", get(artwork_handler))
         .route("/:language/artworks/:id/:image_index", get(artwork_handler))
@@ -103,6 +129,6 @@ pub fn router(state: Arc<RwLock<PhixivState>>) -> Router<Arc<RwLock<PhixivState>
         .layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn(redirect_middleware))
-                .layer(middleware::from_fn_with_state(state, authorized_middleware))
+                .layer(middleware::from_fn_with_state(state, authorized_middleware)),
         )
 }

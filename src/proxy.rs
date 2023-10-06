@@ -1,9 +1,20 @@
 use std::{sync::Arc, time::Duration};
 
-use axum::{extract::{Path, State}, Router, middleware, routing::get, response::IntoResponse, TypedHeader, headers::CacheControl, body::StreamBody};
+use axum::{
+    body::StreamBody,
+    extract::{Path, State},
+    headers::CacheControl,
+    middleware,
+    response::IntoResponse,
+    routing::get,
+    Router, TypedHeader,
+};
 use tokio::sync::RwLock;
 
-use crate::{state::{PhixivState, authorized_middleware}, helper::{PhixivError, self}};
+use crate::{
+    helper::{self, PhixivError},
+    state::{authorized_middleware, PhixivState},
+};
 
 async fn proxy_handler(
     State(state): State<Arc<RwLock<PhixivState>>>,
@@ -15,7 +26,10 @@ async fn proxy_handler(
 
     let mut headers = helper::headers();
     headers.append("Referer", "https://www.pixiv.net/".parse()?);
-    headers.append("Authorization", format!("Bearer {}", state.auth.access_token).parse()?);
+    headers.append(
+        "Authorization",
+        format!("Bearer {}", state.auth.access_token).parse()?,
+    );
 
     let response = state.client.get(&url).headers(headers).send().await?;
 
@@ -23,9 +37,9 @@ async fn proxy_handler(
         TypedHeader(
             CacheControl::new()
                 .with_max_age(Duration::from_secs(60 * 60 * 24))
-                .with_public()
+                .with_public(),
         ),
-        StreamBody::new(response.bytes_stream())
+        StreamBody::new(response.bytes_stream()),
     ))
 }
 

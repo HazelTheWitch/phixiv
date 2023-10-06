@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
-use axum::{extract::{State, Query, Host}, Json};
+use axum::{
+    extract::{Host, Query, State},
+    Json,
+};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
-use crate::{state::PhixivState, helper::PhixivError, pixiv::ArtworkListing};
+use crate::{helper::PhixivError, pixiv::ArtworkListing, state::PhixivState};
 
 #[derive(Deserialize)]
 pub struct ArtworkInfoPath {
@@ -19,5 +22,14 @@ pub(super) async fn artwork_info_handler(
 ) -> Result<Json<ArtworkListing>, PhixivError> {
     let state = state.read().await;
 
-    Ok(Json(ArtworkListing::get_listing(path.language, path.id, &state.auth.access_token, &host, &state.client).await?))
+    Ok(Json(
+        ArtworkListing::get_listing(
+            path.language,
+            path.id,
+            &state.auth.access_token,
+            &host,
+            &state.client,
+        )
+        .await?,
+    ))
 }

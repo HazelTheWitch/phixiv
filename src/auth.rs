@@ -1,4 +1,7 @@
-use std::{collections::HashMap, time::{Instant, Duration}};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
 use http::StatusCode;
 use reqwest::Client;
@@ -68,7 +71,7 @@ impl PixivAuth {
         Ok(Self {
             access_token: response.access_token,
             refresh_token: response.refresh_token,
-            expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION)
+            expires_after: Instant::now() + Duration::from_secs(TOKEN_DURATION),
         })
     }
 

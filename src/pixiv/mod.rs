@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use askama::Template;
+use itertools::Itertools;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use itertools::Itertools;
 
 use crate::helper;
 
-use self::model::{AppReponse, AjaxResponse};
+use self::model::{AjaxResponse, AppReponse};
 
 mod model;
 
@@ -35,7 +35,11 @@ impl TryFrom<RawArtworkPath> for ArtworkPath {
             None => None,
         };
 
-        Ok(Self { language: value.language, id: value.id, image_index })
+        Ok(Self {
+            language: value.language,
+            id: value.id,
+            image_index,
+        })
     }
 }
 
@@ -65,7 +69,11 @@ pub struct ArtworkListing {
     pub author_id: String,
 }
 
-async fn app_request(illust_id: &String, access_token: &str, client: &Client) -> anyhow::Result<AppReponse> {
+async fn app_request(
+    illust_id: &String,
+    access_token: &str,
+    client: &Client,
+) -> anyhow::Result<AppReponse> {
     let app_params = HashMap::from([("illust_id", illust_id)]);
     let mut app_headers = helper::headers();
     app_headers.append("Host", "app-api.pixiv.net".parse()?);
@@ -81,9 +89,17 @@ async fn app_request(illust_id: &String, access_token: &str, client: &Client) ->
         .await?)
 }
 
-async fn ajax_request(illust_id: &String, language: &Option<String>, client: &Client) -> anyhow::Result<AjaxResponse> {
+async fn ajax_request(
+    illust_id: &String,
+    language: &Option<String>,
+    client: &Client,
+) -> anyhow::Result<AjaxResponse> {
     Ok(client
-        .get(format!("https://www.pixiv.net/ajax/illust/{}?lang={}", &illust_id, &language.clone().unwrap_or_else(|| String::from("jp"))))
+        .get(format!(
+            "https://www.pixiv.net/ajax/illust/{}?lang={}",
+            &illust_id,
+            &language.clone().unwrap_or_else(|| String::from("jp"))
+        ))
         .send()
         .await?
         .json()
@@ -108,7 +124,9 @@ impl ArtworkListing {
 
         let ai_generated = illust_response.illust_ai_type == 2;
 
-        let tags: Vec<_> = ajax_body.tags.tags
+        let tags: Vec<_> = ajax_body
+            .tags
+            .tags
             .into_iter()
             .map(|tag| {
                 format!(
@@ -131,7 +149,8 @@ impl ArtworkListing {
 
             vec![format!("https://{}/i{}", host, url.path())]
         } else {
-            illust_response.meta_pages
+            illust_response
+                .meta_pages
                 .into_iter()
                 .map(|mp| {
                     let url = url::Url::parse(&mp.image_urls.large)?;
@@ -161,16 +180,27 @@ impl ArtworkListing {
 
         let image_proxy_url = self.image_proxy_urls[index].clone();
 
-        let tag_string = Itertools::intersperse_with(self.tags.into_iter().map(|t| format!("#{t}")), || String::from(", ")).collect::<String>();
+        let tag_string =
+            Itertools::intersperse_with(self.tags.into_iter().map(|t| format!("#{t}")), || {
+                String::from(", ")
+            })
+            .collect::<String>();
 
-        let description = Itertools::intersperse_with([
-                String::from(if self.ai_generated { "AI Generated\n" } else { "" }),
+        let description = Itertools::intersperse_with(
+            [
+                String::from(if self.ai_generated {
+                    "AI Generated\n"
+                } else {
+                    ""
+                }),
                 self.description,
                 tag_string.clone(),
             ]
             .into_iter()
-            .filter(|s| !s.is_empty()), || String::from("\n"))
-            .collect::<String>();
+            .filter(|s| !s.is_empty()),
+            || String::from("\n"),
+        )
+        .collect::<String>();
 
         ArtworkTemplate {
             image_proxy_url,
@@ -178,9 +208,9 @@ impl ArtworkListing {
             description,
             author_name: self.author_name,
             author_id: self.author_id,
-            url: self.url, 
+            url: self.url,
             alt_text: tag_string,
-            host
+            host,
         }
     }
 }
