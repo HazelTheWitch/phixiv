@@ -27,9 +27,6 @@ impl PhixivState {
     }
 }
 
-#[derive(Clone)]
-pub struct Authorized(pub Arc<String>);
-
 pub async fn authorized_middleware<B>(
     State(state): State<Arc<RwLock<PhixivState>>>,
     request: Request<B>,
