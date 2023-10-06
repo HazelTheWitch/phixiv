@@ -13,7 +13,7 @@ RUN rm -rf ./src
 COPY ./src ./src
 COPY ./templates ./templates
 
-RUN cargo build --release --features bot_filtering
+RUN cargo build --release
 
 FROM debian:bullseye
 
