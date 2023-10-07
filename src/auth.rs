@@ -80,6 +80,7 @@ impl PixivAuth {
 
         self.access_token = response.access_token;
         self.refresh_token = response.refresh_token;
+        self.expires_after = Instant::now() + Duration::from_secs(TOKEN_DURATION);
 
         Ok(())
     }

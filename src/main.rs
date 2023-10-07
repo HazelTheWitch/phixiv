@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
         let (layer, task) = tracing_loki::builder()
             .label(
                 "environment",
-                &env::var("ENVIRONMENT").unwrap_or_else(|_| String::from("development")),
+                env::var("ENVIRONMENT").unwrap_or_else(|_| String::from("development")),
             )?
             .build_url(url::Url::parse(&loki_url).unwrap())?;
 
