@@ -4,15 +4,14 @@ use askama::Template;
 use axum::{
     extract::{Host, OriginalUri, Path, Query, State},
     headers::{CacheControl, UserAgent},
-    middleware::{self, Next},
+    middleware,
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router, TypedHeader,
 };
-use http::{Request, Uri};
+use http::Uri;
 use serde::Deserialize;
 use tokio::sync::RwLock;
-use tower::ServiceBuilder;
 
 use crate::{
     helper::PhixivError,
@@ -50,8 +49,13 @@ async fn artwork_response(
 async fn artwork_handler(
     Path(path): Path<RawArtworkPath>,
     State(state): State<Arc<RwLock<PhixivState>>>,
+    TypedHeader(user_agent): TypedHeader<UserAgent>,
     Host(host): Host,
 ) -> Result<Response, PhixivError> {
+    if let Some(resp) = filter_bots(user_agent, &path) {
+        return Ok(resp)
+    }
+
     Ok(artwork_response(path, state, host).await?)
 }
 
@@ -73,9 +77,32 @@ impl From<MemberIllustParams> for RawArtworkPath {
 async fn member_illust_handler(
     Query(params): Query<MemberIllustParams>,
     State(state): State<Arc<RwLock<PhixivState>>>,
+    TypedHeader(user_agent): TypedHeader<UserAgent>,
     Host(host): Host,
 ) -> Result<Response, PhixivError> {
-    Ok(artwork_response(params.into(), state, host).await?)
+    let raw_path: RawArtworkPath = params.into();
+
+    if let Some(resp) = filter_bots(user_agent, &raw_path) {
+        return Ok(resp)
+    }
+
+    Ok(artwork_response(raw_path, state, host).await?)
+}
+
+fn filter_bots(user_agent: UserAgent, raw_path: &RawArtworkPath) -> Option<Response> {
+    if env::var("BOT_FILTERING")
+        .unwrap_or_else(|_| String::from("false"))
+        .parse::<bool>().ok()?
+    {
+        let bots = isbot::Bots::default();
+
+        if !bots.is_bot(user_agent.as_str()) {
+            let redirect_uri = format!("{}/artworks/{}", raw_path.language.as_ref().map(|l| format!("/{l}")).unwrap_or_else(|| String::from("")), raw_path.id);
+            return Some(Redirect::temporary(&redirect_uri).into_response());
+        }
+    }
+
+    None
 }
 
 fn redirect_uri(uri: Uri) -> String {
@@ -92,26 +119,6 @@ fn redirect_uri(uri: Uri) -> String {
         .to_string()
 }
 
-async fn redirect_middleware<B>(
-    TypedHeader(user_agent): TypedHeader<UserAgent>,
-    OriginalUri(uri): OriginalUri,
-    request: Request<B>,
-    next: Next<B>,
-) -> Result<Response, PhixivError> {
-    if env::var("BOT_FILTERING")
-        .unwrap_or_else(|_| String::from("false"))
-        .parse::<bool>()?
-    {
-        let bots = isbot::Bots::default();
-
-        if !bots.is_bot(user_agent.as_str()) {
-            return Ok(Redirect::temporary(&redirect_uri(uri)).into_response());
-        }
-    }
-
-    Ok(next.run(request).await)
-}
-
 async fn redirect_fallback(OriginalUri(uri): OriginalUri) -> Redirect {
     Redirect::temporary(&redirect_uri(uri))
 }
@@ -126,9 +133,5 @@ pub fn router(
         .route("/artworks/:id/:image_index", get(artwork_handler))
         .route("/member_illust.php", get(member_illust_handler))
         .fallback(redirect_fallback)
-        .layer(
-            ServiceBuilder::new()
-                .layer(middleware::from_fn(redirect_middleware))
-                .layer(middleware::from_fn_with_state(state, authorized_middleware)),
-        )
+        .layer(middleware::from_fn_with_state(state, authorized_middleware))
 }
