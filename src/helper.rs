@@ -18,7 +18,7 @@ pub struct PhixivError(anyhow::Error);
 
 impl IntoResponse for PhixivError {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", self.0)).into_response()
+        (StatusCode::INTERNAL_SERVER_ERROR, format!("{:#}", self.0)).into_response()
     }
 }
 

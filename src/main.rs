@@ -7,7 +7,7 @@ pub mod pixiv;
 pub mod proxy;
 pub mod state;
 
-use std::{env, net::SocketAddr, sync::Arc};
+use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 
 use api::api_router;
 use axum::{response::IntoResponse, routing::get, Json, Router};
@@ -18,9 +18,9 @@ use state::PhixivState;
 use tokio::sync::RwLock;
 use tower_http::{
     normalize_path::NormalizePathLayer,
-    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer, DefaultOnResponse},
+    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer, DefaultOnResponse}, classify::ServerErrorsFailureClass,
 };
-use tracing::Level;
+use tracing::{Level, Span};
 use tracing_subscriber::{
     fmt, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, EnvFilter,
 };
