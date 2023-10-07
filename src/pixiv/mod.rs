@@ -180,10 +180,7 @@ impl ArtworkListing {
 
         let image_proxy_url = self.image_proxy_urls[index].clone();
 
-        let tag_string =
-            Itertools::intersperse_with(self.tags.into_iter(), || {
-                String::from(", ")
-            })
+        let tag_string = Itertools::intersperse_with(self.tags.into_iter(), || String::from(", "))
             .collect::<String>();
 
         let description = Itertools::intersperse_with(

@@ -53,7 +53,7 @@ async fn artwork_handler(
     Host(host): Host,
 ) -> Result<Response, PhixivError> {
     if let Some(resp) = filter_bots(user_agent, &path) {
-        return Ok(resp)
+        return Ok(resp);
     }
 
     Ok(artwork_response(path, state, host).await?)
@@ -83,7 +83,7 @@ async fn member_illust_handler(
     let raw_path: RawArtworkPath = params.into();
 
     if let Some(resp) = filter_bots(user_agent, &raw_path) {
-        return Ok(resp)
+        return Ok(resp);
     }
 
     Ok(artwork_response(raw_path, state, host).await?)
@@ -92,12 +92,21 @@ async fn member_illust_handler(
 fn filter_bots(user_agent: UserAgent, raw_path: &RawArtworkPath) -> Option<Response> {
     if env::var("BOT_FILTERING")
         .unwrap_or_else(|_| String::from("false"))
-        .parse::<bool>().ok()?
+        .parse::<bool>()
+        .ok()?
     {
         let bots = isbot::Bots::default();
 
         if !bots.is_bot(user_agent.as_str()) {
-            let redirect_uri = format!("https://www.pixiv.net{}/artworks/{}", raw_path.language.as_ref().map(|l| format!("/{l}")).unwrap_or_else(|| String::from("")), raw_path.id);
+            let redirect_uri = format!(
+                "https://www.pixiv.net{}/artworks/{}",
+                raw_path
+                    .language
+                    .as_ref()
+                    .map(|l| format!("/{l}"))
+                    .unwrap_or_else(|| String::from("")),
+                raw_path.id
+            );
             return Some(Redirect::temporary(&redirect_uri).into_response());
         }
     }
