@@ -97,7 +97,7 @@ fn filter_bots(user_agent: UserAgent, raw_path: &RawArtworkPath) -> Option<Respo
         let bots = isbot::Bots::default();
 
         if !bots.is_bot(user_agent.as_str()) {
-            let redirect_uri = format!("{}/artworks/{}", raw_path.language.as_ref().map(|l| format!("/{l}")).unwrap_or_else(|| String::from("")), raw_path.id);
+            let redirect_uri = format!("https://www.pixiv.net{}/artworks/{}", raw_path.language.as_ref().map(|l| format!("/{l}")).unwrap_or_else(|| String::from("")), raw_path.id);
             return Some(Redirect::temporary(&redirect_uri).into_response());
         }
     }
