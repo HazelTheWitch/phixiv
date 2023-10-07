@@ -115,8 +115,8 @@ impl ArtworkListing {
         client: &Client,
     ) -> anyhow::Result<Self> {
         let (app_response, ajax_response) = tokio::join!(
-            app_request(&illust_id, &access_token, &client),
-            ajax_request(&illust_id, &language, &client),
+            app_request(&illust_id, access_token, client),
+            ajax_request(&illust_id, &language, client),
         );
 
         let illust_response = app_response?.illust;
@@ -144,7 +144,7 @@ impl ArtworkListing {
             })
             .collect();
 
-        let image_proxy_urls = if illust_response.meta_pages.len() == 0 {
+        let image_proxy_urls = if illust_response.meta_pages.is_empty() {
             let url = url::Url::parse(&illust_response.image_urls.large)?;
 
             vec![format!("https://{}/i{}", host, url.path())]
