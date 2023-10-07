@@ -18,7 +18,7 @@ use state::PhixivState;
 use tokio::sync::RwLock;
 use tower_http::{
     normalize_path::NormalizePathLayer,
-    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer},
+    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer, DefaultOnResponse},
 };
 use tracing::Level;
 use tracing_subscriber::{
@@ -78,7 +78,7 @@ fn app(state: Arc<RwLock<PhixivState>>) -> Router {
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                .on_request(DefaultOnRequest::new().level(Level::INFO)),
+                .on_response(DefaultOnResponse::new().level(Level::INFO))
         )
         .layer(NormalizePathLayer::trim_trailing_slash())
         .with_state(state)
