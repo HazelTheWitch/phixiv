@@ -114,17 +114,14 @@ impl ArtworkListing {
         host: &str,
         client: &Client,
     ) -> anyhow::Result<Self> {
-        let (app_response, ajax_response) = tokio::join!(
+        let (app_response, ajax_response) = tokio::try_join!(
             app_request(&illust_id, access_token, client),
             ajax_request(&illust_id, &language, client),
-        );
+        )?;
 
-        let illust_response = app_response?.illust;
-        let ajax_body = ajax_response?.body;
+        let ai_generated = app_response.illust.illust_ai_type == 2;
 
-        let ai_generated = illust_response.illust_ai_type == 2;
-
-        let tags: Vec<_> = ajax_body
+        let tags: Vec<_> = ajax_response.body
             .tags
             .tags
             .into_iter()
@@ -144,12 +141,12 @@ impl ArtworkListing {
             })
             .collect();
 
-        let image_proxy_urls = if illust_response.meta_pages.is_empty() {
-            let url = url::Url::parse(&illust_response.image_urls.large)?;
+        let image_proxy_urls = if app_response.illust.meta_pages.is_empty() {
+            let url = url::Url::parse(&app_response.illust.image_urls.large)?;
 
             vec![format!("https://{}/i{}", host, url.path())]
         } else {
-            illust_response
+            app_response.illust
                 .meta_pages
                 .into_iter()
                 .map(|mp| {
@@ -162,13 +159,13 @@ impl ArtworkListing {
 
         Ok(Self {
             image_proxy_urls,
-            title: ajax_body.title,
+            title: ajax_response.body.title,
             ai_generated,
-            description: ajax_body.description,
+            description: ajax_response.body.description,
             tags,
-            url: ajax_body.extra_data.meta.canonical,
-            author_name: ajax_body.author_name,
-            author_id: ajax_body.author_id,
+            url: ajax_response.body.extra_data.meta.canonical,
+            author_name: ajax_response.body.author_name,
+            author_id: ajax_response.body.author_id,
         })
     }
 
