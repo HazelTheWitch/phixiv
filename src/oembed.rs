@@ -28,8 +28,8 @@ impl EmbedResponse {
             embed_type: "rich",
             author_name,
             author_url,
-            provider_name: "phixiv",
-            provider_url: "https://github.com/HazelTheWitch/phixiv",
+            provider_name: "PHIXIV WILL BE DISCONTINUED 01/01/2024",
+            provider_url: "https://github.com/HazelTheWitch/phixiv/blob/main/GOODBYE.md",
         }
     }
 }
