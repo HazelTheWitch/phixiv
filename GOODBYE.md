@@ -1,6 +1,6 @@
 # Regarding Phixiv
 
-I will be discontinuing service to phixiv on January 1, 2024.
+I will be discontinuing service to phixiv on December 30, 2023.
 
 This project has become a bit too much for me, the hosting costs are too much to justify for a side project.
 It has stopped being a fun programming project and has turned into a nightmare of managing infrastructure and comparing hosting platforms.
