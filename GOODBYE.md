@@ -6,8 +6,7 @@ This project has become a bit too much for me, the hosting costs are too much to
 It has stopped being a fun programming project and has turned into a nightmare of managing infrastructure and comparing hosting platforms.
 The code hosted here will remain available to anyone who wishes to expand on it or host it themselves.
 
-The main cost of hosting is egress traffic, since pixiv requires I proxy the images phixiv is transfering roughly 20-30 gb of data a day, which at $0.10/GB
-is $75 a month.
+The main cost of hosting is egress traffic, since pixiv requires I proxy the images phixiv is transfering roughly 20-30 gb of data a day.
 
 If you are interested in picking up hosting please contact me via Discord at `harlot` or just make an issue in this repo, you'll probably need help getting it running
 properly, a couple environment variables to set.
