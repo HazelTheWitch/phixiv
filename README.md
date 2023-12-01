@@ -1,5 +1,7 @@
 # phixiv
 
+## PHIXIV WILL BE DISCONTINUED 01/01/2024
+
 [pixiv](https://www.pixiv.net/) embed fixer. If you run into any issues or have any suggestions to make this service better, please [make an issue](https://github.com/HazelTheWitch/phixiv/issues/new).
 
 ## How to use
