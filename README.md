@@ -1,6 +1,6 @@
 # phixiv
 
-## [PHIXIV WILL BE DISCONTINUED December 30 2023](https://github.com/HazelTheWitch/phixiv/blob/main/GOODBYE.md)
+## [PHIXIV NOW LIVES HERE](https://github.com/thelaao/phixiv)
 
 [pixiv](https://www.pixiv.net/) embed fixer. If you run into any issues or have any suggestions to make this service better, please [make an issue](https://github.com/HazelTheWitch/phixiv/issues/new).
 
