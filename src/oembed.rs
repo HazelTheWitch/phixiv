@@ -1,3 +1,5 @@
+use std::env;
+
 use axum::{extract::Query, Json};
 use serde::{Deserialize, Serialize};
 use urlencoding::encode;
@@ -17,8 +19,8 @@ pub struct EmbedResponse {
     embed_type: &'static str,
     author_name: String,
     author_url: String,
-    provider_name: &'static str,
-    provider_url: &'static str,
+    provider_name: String,
+    provider_url: String,
 }
 
 impl EmbedResponse {
@@ -28,8 +30,8 @@ impl EmbedResponse {
             embed_type: "rich",
             author_name,
             author_url,
-            provider_name: "PHIXIV WILL BE DISCONTINUED 12/30/2023",
-            provider_url: "https://github.com/HazelTheWitch/phixiv/blob/main/GOODBYE.md",
+            provider_name: env::var("PROVIDER_NAME").unwrap_or_else(|_| String::from("phixiv")),
+            provider_url: env::var("PROVIDER_URL").unwrap_or_else(|_| String::from("https://github.com/HazelTheWitch/phixiv")),
         }
     }
 }
