@@ -1,5 +1,7 @@
 # Regarding Phixiv
 
+**UPDATE: hosting has been transfered and the repo going forward can be visited at https://github.com/thelaao/phixiv**
+
 I will be discontinuing service to phixiv on December 30, 2023.
 
 This project has become a bit too much for me, the hosting costs are too much to justify for a side project.
